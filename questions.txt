@@ -1,2 +1,6 @@
+Programming:
+
 1. Preproccessed sentry dataset.
 2. F1-score why bigger than 1 (percentage?)
+
+Paper:
