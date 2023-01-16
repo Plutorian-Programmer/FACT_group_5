@@ -2,5 +2,8 @@ Programming:
 
 1. Preproccessed sentry dataset.
 2. F1-score why bigger than 1 (percentage?)
+3. Can we drop the twenty reviews before sentiment annalysis.
+4. User vs model perspective
+5. Difference in result between counter paper and our paper
 
 Paper:
