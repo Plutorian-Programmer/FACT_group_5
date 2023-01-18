@@ -34,9 +34,10 @@ class Dataset():
         self.test_data = None
 
         self.pre_processing()
-        self.get_user_item_feature_matrix()
-        self.sample_training()  # sample training data, for traning BPR loss
-        self.sample_test()  # sample test data
+        # TO IMPLEMENT
+        # self.get_user_item_feature_matrix() # Get the attention matrices
+        # self.sample_training()  # sample training data, for traning BPR loss
+        # self.sample_test()  # sample test data
 
     def pre_processing(self,):
         sentiment_data = []
@@ -135,8 +136,8 @@ class Dataset():
         self.user_name_dict = user_name_dict
         self.item_name_dict = item_name_dict
         self.feature_name_dict = feature_name_dict
-        self.user_hist_inter_dict = user_hist_inter_dict
-        self.item_hist_inter_dict = item_hist_inter_dict
+        self.user_hist_inter_dict = user_hist_inter_dict # WHERE ARE THESE USED?
+        self.item_hist_inter_dict = item_hist_inter_dict #
         self.users = users
         self.items = items
         self.features = features
