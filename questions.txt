@@ -7,3 +7,4 @@ Programming:
 5. Difference in result between counter paper and our paper
 
 Paper:
+1. Grading matrix - creativity points; can we still get full points if we only reproduce?
