@@ -1,7 +1,7 @@
 from args import arg_parser_preprocessing
 from utils import get_feature_list
 import numpy as np
-from collections import defaultdict
+from collections import Counter
 import json
 
 class Dataset():
@@ -76,9 +76,75 @@ class Dataset():
         item_name_dict = {}
         feature_name_dict = {}
         features = get_feature_list(sentiment_data)
+
+        # Rename identifications to ints
+        count = 0
+        for user in user_dict:
+            if user not in user_name_dict:
+                user_name_dict[user] = count
+                count += 1
+        count = 0
+        for item in item_dict:
+            if item not in item_name_dict:
+                item_name_dict[item] = count
+                count += 1
+        count = 0
+        for feature in features:
+            if feature not in feature_name_dict:
+                feature_name_dict[feature] = count
+                count += 1
+
+
+        for i in range(len(sentiment_data)):
+            sentiment_data[i][0] = user_name_dict[sentiment_data[i][0]]
+            sentiment_data[i][1] = item_name_dict[sentiment_data[i][1]]
+            for j in range(len(sentiment_data[i]) - 2):
+                sentiment_data[i][j+2][0] = feature_name_dict[sentiment_data[i][j + 2][0]]
+
+        renamed_user_item_date_dict = {}
+        for key, value in user_item_date_dict.items():
+            renamed_user_item_date_dict[user_name_dict[key[0]], item_name_dict[key[1]]] = value
+        user_item_date_dict = renamed_user_item_date_dict
+
+        # sort with date
+        user_item_date_dict = dict(sorted(user_item_date_dict.items(), key=lambda item: item[1]))
+
+        # NOT SURE WHAT THIS LAST PART DOES YET
+        user_hist_inter_dict = {}  # {"u1": [i1, i2, i3, ...], "u2": [i1, i2, i3, ...]}, sort with time
+        item_hist_inter_dict = {}
+        # ranked_user_item_dict = {}  # {"u1": [i1, i2, i3, ...], "u2": [i1, i2, i3, ...]}
+        for key, value in user_item_date_dict.items():
+            user = key[0]
+            item = key[1]
+            if user not in user_hist_inter_dict:
+                user_hist_inter_dict[user] = [item]
+            else:
+                user_hist_inter_dict[user].append(item)
+            if item not in item_hist_inter_dict:
+                item_hist_inter_dict[item] = [user]
+            else:
+                item_hist_inter_dict[item].append(user)
+
+        user_hist_inter_dict = dict(sorted(user_hist_inter_dict.items()))
+        item_hist_inter_dict = dict(sorted(item_hist_inter_dict.items()))
+
+        users = list(user_hist_inter_dict.keys())
+        items = list(item_hist_inter_dict.keys())
+
+        self.sentiment_data = sentiment_data
+        self.user_name_dict = user_name_dict
+        self.item_name_dict = item_name_dict
+        self.feature_name_dict = feature_name_dict
+        self.user_hist_inter_dict = user_hist_inter_dict
+        self.item_hist_inter_dict = item_hist_inter_dict
+        self.users = users
+        self.items = items
+        self.features = features
+        self.user_num = len(users)
+        self.item_num = len(items)
+        self.feature_num = len(features)
+        return True
         
-
-
 def get_user_item_dict(sentiment_data):
     """
     build user & item dictionary
