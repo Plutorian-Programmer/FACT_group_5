@@ -64,7 +64,7 @@ class Dataset():
         # sentiment_data = sentiment_data_filtering(
         ###TODO Add sentiment data filtering (>=20 reviews per item and human) Done
         # )
-        sentiment_data = sentiment_data_filtering(sentiment_data)
+        sentiment_data = sentiment_data_filtering(sentiment_data, self.args.item_thresh, self.args.user_thresh)
         user_dict, item_dict = get_user_item_dict(sentiment_data)
         user_item_date_dict = {}
 

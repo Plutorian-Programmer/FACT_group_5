@@ -6,7 +6,7 @@ def get_feature_list(sentiment_data):
     :param sentiment_data: [user, item, [feature1, opinion1, sentiment1], [feature2, opinion2, sentiment2] ...]
     :return: feature set F
     """
-    feature_set = {}
+    feature_set = set()
     for row in sentiment_data:
         for fos in row[2:]:
             feature = fos[0]
@@ -14,20 +14,20 @@ def get_feature_list(sentiment_data):
     feature_list = np.array(list(feature_set))
     return feature_list
 
-def sentiment_data_filtering(sentiment_data):
+def sentiment_data_filtering(sentiment_data, item_tresh, user_tresh):
     #sentiment_data = [[used_id, item_id, [feature, opinion, score]]]
     item_count = defaultdict(lambda: 0)
     for review in sentiment_data:
         item_count[review[1]] += 1
     
-    allowed_items = [item for item in item_count.keys() if item_count[item] >= 20]
+    allowed_items = [item for item in item_count.keys() if item_count[item] >= item_tresh]
 
     user_count = defaultdict(lambda: 0)
     for review in sentiment_data:
         if review[1] in allowed_items:
             user_count[review[0]] += 1
     
-    allowed_users = [user for user in user_count.keys() if user_count[user] >= 20]
+    allowed_users = [user for user in user_count.keys() if user_count[user] >= user_tresh]
 
     sentiment_data = [review for review in sentiment_data if review[0] in allowed_users and review[1] in allowed_items]
     
