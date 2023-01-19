@@ -34,7 +34,6 @@ class Dataset():
         self.test_data = None
 
         self.pre_processing()
-        # TO IMPLEMENT
         self.get_user_item_feature_matrix() # Get the attention matrices
         self.sample_training()  # sample training data, for traning BPR loss
         self.sample_test()  # sample test data
@@ -61,9 +60,6 @@ class Dataset():
                         sentiment_data[-1].append([feature, opinion, sentiment])
                 line = f.readline().strip()
         sentiment_data = np.array(sentiment_data)
-        # sentiment_data = sentiment_data_filtering(
-        ###TODO Add sentiment data filtering (>=20 reviews per item and human) Done
-        # )
         sentiment_data = sentiment_data_filtering(sentiment_data, self.args.item_thresh, self.args.user_thresh)
         user_dict, item_dict = get_user_item_dict(sentiment_data)
         user_item_date_dict = {}
@@ -98,7 +94,6 @@ class Dataset():
             if feature not in feature_name_dict:
                 feature_name_dict[feature] = count
                 count += 1
-
 
         for i in range(len(sentiment_data)):
             sentiment_data[i][0] = user_name_dict[sentiment_data[i][0]]
@@ -232,7 +227,7 @@ def get_user_item_dict(sentiment_data):
 
 
 def preprocessing(preprocessing_args):
-    r = Dataset(preprocessing_args)
+    rec_dataset = Dataset(preprocessing_args)
 
 if __name__ == "__main__":
     preprocessing_args = arg_parser_preprocessing()
