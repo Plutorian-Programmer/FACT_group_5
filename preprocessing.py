@@ -1,5 +1,5 @@
 from args import arg_parser_preprocessing
-from utils import get_feature_list
+from utils import get_feature_list, sentiment_data_filtering, get_user_attention_matrix, get_item_quality_matrix, sample_training_pairs
 import numpy as np
 from collections import Counter
 import json
@@ -35,9 +35,12 @@ class Dataset():
 
         self.pre_processing()
         # TO IMPLEMENT
-        # self.get_user_item_feature_matrix() # Get the attention matrices
-        # self.sample_training()  # sample training data, for traning BPR loss
-        # self.sample_test()  # sample test data
+        self.get_user_item_feature_matrix() # Get the attention matrices
+        self.sample_training()  # sample training data, for traning BPR loss
+        self.sample_test()  # sample test data
+
+        print(self.training_data)
+        print(self.test_data)
 
     def pre_processing(self,):
         sentiment_data = []
@@ -59,8 +62,9 @@ class Dataset():
                 line = f.readline().strip()
         sentiment_data = np.array(sentiment_data)
         # sentiment_data = sentiment_data_filtering(
-        ###TODO Add sentiment data filtering (>=20 reviews per item and human)
+        ###TODO Add sentiment data filtering (>=20 reviews per item and human) Done
         # )
+        sentiment_data = sentiment_data_filtering(sentiment_data, self.args.item_thresh, self.args.user_thresh)
         user_dict, item_dict = get_user_item_dict(sentiment_data)
         user_item_date_dict = {}
 
@@ -145,7 +149,66 @@ class Dataset():
         self.item_num = len(items)
         self.feature_num = len(features)
         return True
-        
+    
+    def get_user_item_feature_matrix(self):
+        # exclude test data from the sentiment data to construct matrix
+        train_u_i_set = set()
+        for user, items in self.user_hist_inter_dict.items():
+            items = items[:-self.args.test_length]
+            for item in items:
+                train_u_i_set.add((user, item))
+
+        train_sentiment_data = []
+        for row in self.sentiment_data:
+            user = row[0]
+            item = row[1]
+            if (user, item) in train_u_i_set:
+                train_sentiment_data.append(row)
+        self.user_feature_matrix = get_user_attention_matrix(
+            train_sentiment_data, 
+            self.user_num, 
+            self.features, 
+            max_range=5)
+        self.item_feature_matrix = get_item_quality_matrix(
+            train_sentiment_data, 
+            self.item_num, 
+            self.features, 
+            max_range=5)
+        return True
+    
+    def sample_training(self):
+        print('======================= sample training data =======================')
+        # print(self.user_feature_matrix.shape, self.item_feature_matrix.shape)
+        training_data = []
+        item_set = set(self.items)
+        for user, items in self.user_hist_inter_dict.items():
+            items = items[:-(self.args.test_length+self.args.val_length)]
+            training_pairs = sample_training_pairs(
+                user, 
+                items, 
+                item_set, 
+                self.args.sample_ratio)
+            for pair in training_pairs:
+                training_data.append(pair)
+        print('# training samples :', len(training_data))
+        self.training_data = np.array(training_data)
+        return True
+    
+    def sample_test(self):
+        print('======================= sample test data =======================')
+        user_item_label_list = []  # [[u, [item1, item2, ...], [l1, l2, ...]], ...]
+        for user, items in self.user_hist_inter_dict.items():
+            items = items[-(self.args.test_length+self.args.val_length):]
+            user_item_label_list.append([user, items, np.ones(len(items))])  # add the test items
+            negative_items = [item for item in self.items if 
+                item not in self.user_hist_inter_dict[user]]  # the not interacted items
+            negative_items = np.random.choice(np.array(negative_items), self.args.neg_length, replace=False)
+            user_item_label_list[-1][1] = np.concatenate((user_item_label_list[-1][1], negative_items), axis=0)
+            user_item_label_list[-1][2] = np.concatenate((user_item_label_list[-1][2], np.zeros(self.args.neg_length)), axis=0)
+        print('# test samples :', len(user_item_label_list))
+        self.test_data = np.array(user_item_label_list)
+        return True
+    
 def get_user_item_dict(sentiment_data):
     """
     build user & item dictionary
@@ -170,7 +233,7 @@ def get_user_item_dict(sentiment_data):
 
 def preprocessing(preprocessing_args):
     r = Dataset(preprocessing_args)
-    
+
 if __name__ == "__main__":
     preprocessing_args = arg_parser_preprocessing()
     preprocessing(preprocessing_args)
