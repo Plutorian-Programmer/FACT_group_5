@@ -13,3 +13,4 @@ def get_feature_list(sentiment_data):
             feature_set.add(feature)
     feature_list = np.array(list(feature_set))
     return feature_list
+

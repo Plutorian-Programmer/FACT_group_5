@@ -34,7 +34,7 @@ class Dataset():
         self.test_data = None
 
         self.pre_processing()
-        # TO IMPLEMENT
+        ## TODO - TO IMPLEMENT
         # self.get_user_item_feature_matrix() # Get the attention matrices
         # self.sample_training()  # sample training data, for traning BPR loss
         # self.sample_test()  # sample test data
@@ -94,7 +94,6 @@ class Dataset():
             if feature not in feature_name_dict:
                 feature_name_dict[feature] = count
                 count += 1
-
 
         for i in range(len(sentiment_data)):
             sentiment_data[i][0] = user_name_dict[sentiment_data[i][0]]
@@ -169,7 +168,7 @@ def get_user_item_dict(sentiment_data):
 
 
 def preprocessing(preprocessing_args):
-    r = Dataset(preprocessing_args)
+    rec_dataset = Dataset(preprocessing_args)
     
 if __name__ == "__main__":
     preprocessing_args = arg_parser_preprocessing()
