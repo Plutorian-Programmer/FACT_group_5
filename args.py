@@ -12,7 +12,7 @@ def arg_parser_preprocessing():
                         help="remove users with reviews less than this threshold")
     parser.add_argument("--sample_ratio", dest="sample_ratio", type=int, default=2, 
                         help="the (negative: positive sample) ratio for training BPR loss")
-    parser.add_argument("--test_length", dest="test_length", type=int, default=20, 
+    parser.add_argument("--test_length", dest="test_length", type=int, default=5, 
                         help="the number of test items")
     parser.add_argument("--val_length", dest="val_length", type=int, default=1, 
                         help="the number of val items")
