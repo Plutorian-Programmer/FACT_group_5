@@ -72,7 +72,7 @@ def trainmodel(train_args, pre_processing_args):
             print('epoch %d: ' % epoch, 'training loss: ', ave_train, 'NDCG: ', ndcg)
     
     output_path = train_args.output_path
-    torch.save(model.state_dict(), os.path.join(output_path, "model.model"))
+    torch.save(model.state_dict(), output_path)
     return 0
 
 

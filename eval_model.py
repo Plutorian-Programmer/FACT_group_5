@@ -12,17 +12,17 @@ with open(dataset_path, "rb") as f:
 model_path = "models\model.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
-
+k = 5
 f1_score = compute_f1(rec_dataset.test_data, 
             rec_dataset.user_feature_matrix, 
             rec_dataset.item_feature_matrix, 
-            5, 
+            k, 
             model, 
             device)
 ndcg_score = compute_ndcg(rec_dataset.test_data, 
             rec_dataset.user_feature_matrix, 
             rec_dataset.item_feature_matrix, 
-            5, 
+            k, 
             model, 
             device)
 

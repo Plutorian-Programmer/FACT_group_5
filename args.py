@@ -12,14 +12,14 @@ def arg_parser_preprocessing():
                         help="remove users with reviews less than this threshold")
     parser.add_argument("--sample_ratio", dest="sample_ratio", type=int, default=2, 
                         help="the (negative: positive sample) ratio for training BPR loss")
-    parser.add_argument("--test_length", dest="test_length", type=int, default=5, 
+    parser.add_argument("--test_length", dest="test_length", type=int, default=20, 
                         help="the number of test items")
     parser.add_argument("--val_length", dest="val_length", type=int, default=1, 
                         help="the number of val items")
     parser.add_argument("--neg_length", dest="neg_length", type=int, default=100, help="# of negative samples in evaluation")
-    parser.add_argument("--save_path", dest="save_path", type=str, default="models/Dataset.pickle", 
+    parser.add_argument("--save_path", dest="save_path", type=str, default="models/Dataset_20.pickle", 
                         help="The path to save the preprocessed dataset object")
-    parser.add_argument("--use_pre", dest="use_pre", type=str, default=True, 
+    parser.add_argument("--use_pre", dest="use_pre", type=str, default=False, 
             help="The path to save the preprocessed dataset object")
     return parser.parse_args()
 
@@ -33,7 +33,7 @@ def arg_parser_training():
     parser.add_argument("--rec_k", dest="rec_k", type=int, default=5, help="length of rec list")
     parser.add_argument("--gpu", default=False)
     parser.add_argument("--weight_decay", default=0., type=float) # not sure whether to use
-    parser.add_argument("--output_path", dest="output_path", type=str, default="models/", 
+    parser.add_argument("--output_path", dest="output_path", type=str, default="models/model_20.model", 
                         help="The path to save the model")
     return parser.parse_args()
 
