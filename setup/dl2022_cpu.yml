@@ -3,7 +3,7 @@ channels:
   - pytorch
   - conda-forge
   - defaults
-dependencies:
+dependencies: 
   - python=3.10.6
   - pip=22.2.2
   - cpuonly=2.0
