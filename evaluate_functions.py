@@ -35,6 +35,22 @@ def compute_f1(test_data, user_feature_matrix, item_feature_matrix, k, model, de
             scores = np.array(scores.to('cpu'))
             # print(scores)
             # print(len(scores))
-            print(len(gt_labels))
-            print(gt_labels)
-            exit()
+            pred_items = np.argsort(scores)[-k:]
+            real_items = np.where(gt_labels == 1)[0]
+            tp = 0
+            fp = 0
+            for item in pred_items:
+                if item in real_items:
+                    tp += 1
+                else:
+                    fp += 1
+            if tp == 0:
+                f1_scores.append(0)
+                continue
+            fn = k-tp
+            prec = tp/(tp+fp)
+            rec = tp/(tp+fn)
+            f1 = (2*prec*rec)/(prec+rec)
+            f1_scores.append(f1)
+    ave_f1 = np.mean(f1_scores)
+    return ave_f1
