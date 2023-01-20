@@ -15,6 +15,12 @@ def get_feature_list(sentiment_data):
     return feature_list
 
 def sentiment_data_filtering(sentiment_data, item_tresh, user_tresh):
+    user_dict, item_dict = get_user_item_dict(sentiment_data)
+    features = get_feature_list(sentiment_data)
+    print("original review length: ", len(sentiment_data))
+    print("original user length: ", len(user_dict))
+    print("original item length: ", len(item_dict))
+    print("original feature length: ", len(features))
     #sentiment_data = [[used_id, item_id, [feature, opinion, score]]]
     item_count = defaultdict(lambda: 0)
     for review in sentiment_data:
@@ -31,6 +37,14 @@ def sentiment_data_filtering(sentiment_data, item_tresh, user_tresh):
 
     sentiment_data = [review for review in sentiment_data if review[0] in allowed_users and review[1] in allowed_items]
     
+    user_dict, item_dict = get_user_item_dict(sentiment_data)
+    features = get_feature_list(sentiment_data)
+    print('valid review length: ', len(sentiment_data))
+    print("valid user: ", len(user_dict))
+    print('valid item : ', len(item_dict))
+    print("valid feature length: ", len(features))
+    print('user dense is:', len(sentiment_data) / len(user_dict))
+    sentiment_data = np.array(sentiment_data)
     return sentiment_data
 
 def get_user_attention_matrix(sentiment_data, user_num, feature_list, max_range=5):
@@ -109,3 +123,24 @@ def sample_training_pairs(user, training_items, item_set, sample_ratio=10):
     for n_item in negative_items:
         train_pairs.append([user, n_item, 0])
     return train_pairs
+
+def get_user_item_dict(sentiment_data):
+    """
+    build user & item dictionary
+    :param sentiment_data: [user, item, [feature1, opinion1, sentiment1], [feature2, opinion2, sentiment2] ...]
+    :return: user dictionary {u1:[i, i, i...], u2:[i, i, i...]}, similarly, item dictionary
+    """
+    user_dict = {}
+    item_dict = {}
+    for row in sentiment_data:
+        user = row[0]
+        item = row[1]
+        if user not in user_dict:
+            user_dict[user] = [item]
+        else:
+            user_dict[user].append(item)
+        if item not in item_dict:
+            item_dict[item] = [user]
+        else:
+            item_dict[item].append(user)
+    return user_dict, item_dict
