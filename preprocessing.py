@@ -38,8 +38,8 @@ class Dataset():
         self.sample_training()  # sample training data, for traning BPR loss
         self.sample_test()  # sample test data
 
-        print(self.training_data)
-        print(self.test_data)
+        # print(self.training_data)
+        # print(self.test_data)
 
     def pre_processing(self,):
         sentiment_data = []
@@ -228,7 +228,8 @@ def get_user_item_dict(sentiment_data):
 
 def preprocessing(preprocessing_args):
     rec_dataset = Dataset(preprocessing_args)
+    return rec_dataset
 
 if __name__ == "__main__":
     preprocessing_args = arg_parser_preprocessing()
-    preprocessing(preprocessing_args)
+    rec_dataset = preprocessing(preprocessing_args)
