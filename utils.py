@@ -21,6 +21,7 @@ def sentiment_data_filtering(sentiment_data, item_tresh, user_tresh):
     print("original user length: ", len(user_dict))
     print("original item length: ", len(item_dict))
     print("original feature length: ", len(features))
+    print("-"*69)
     #sentiment_data = [[used_id, item_id, [feature, opinion, score]]]
     item_count = defaultdict(lambda: 0)
     for review in sentiment_data:

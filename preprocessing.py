@@ -204,6 +204,8 @@ class Dataset():
         self.test_data = np.array(user_item_label_list)
         return True
     
+
+
 def get_user_item_dict(sentiment_data):
     """
     build user & item dictionary

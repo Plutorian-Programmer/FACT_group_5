@@ -1,13 +1,14 @@
 from preprocessing import Dataset
 from torch.utils.data import DataLoader
 from dataloaders import UserItemInterDataset
-from evaluate_functions import compute_ndcg
+from evaluate_functions import compute_ndcg, compute_f1
 import torch
 from models import BaseRecModel
 from args import *
 import tqdm
 import numpy as np
 import os
+import pickle
 
 def trainmodel(train_args, pre_processing_args):
     train_args.gpu = False
@@ -15,8 +16,15 @@ def trainmodel(train_args, pre_processing_args):
         device = torch.device('cuda')
     else:
         device = 'cpu'
-
-    rec_dataset = Dataset(pre_processing_args)
+    
+    dataset_path = pre_processing_args.save_path
+    if pre_processing_args.use_pre:
+        with open(dataset_path, "rb") as f:
+            rec_dataset = pickle.load(f)
+    else:
+        rec_dataset = Dataset(pre_processing_args)
+        with open(dataset_path, "wb") as f:
+            pickle.dump(rec_dataset, f)
 
     train_loader = DataLoader(dataset=UserItemInterDataset(rec_dataset.training_data, 
                             rec_dataset.user_feature_matrix, 
@@ -62,8 +70,9 @@ def trainmodel(train_args, pre_processing_args):
             model, 
             device)
             print('epoch %d: ' % epoch, 'training loss: ', ave_train, 'NDCG: ', ndcg)
-
-    #torch.save(model.state_dict(), os.path.join(out_path, "model.model"))
+    
+    output_path = train_args.output_path
+    torch.save(model.state_dict(), os.path.join(output_path, "model.model"))
     return 0
 
 
