@@ -99,10 +99,30 @@ def disparity(R, user_history):
     # take the difference between the two sides of the equalities as a quantification measure for disparity
     # theta_DP = abs(G1) * Exposure (G0 |R𝐾) − abs(G0) * Exposure (G1 |R𝐾)
     ##### weet niet hoe ik de absolute waarde van g0 moet nemen, is dat de totale lengte van de lijst?
-    theta_DP = abs(g1_exposure) * g0_exposure - abs(g0_exposure) * g1_exposure
+    theta_DP = len(g1_exposure) * g0_exposure - len(g0_exposure) * g1_exposure
     return theta_DP
 
 #Counterfactual reasoning
+# for each user-feature vector A[:,f], we intervene with a vector delta_u (in R^m) to obtain a new user-feature vector A[:,f] + delta_u
+for f in range(len(A)):
+    for delta_u in range(len(A[f])):
+        # we create a new user-feature vector A[:,f] + delta_u, A_cf
+        A_cf = A[:,f] + delta_u
+# for each item-feature vector B[:,f], we intervene with a vector delta_v (in R^m) to obtain a new item-feature vector B[:,f] + delta_v
+for f in range(len(B)):
+    for delta_v in range(len(B[f])):
+        # we create a new item-feature vector B[:,f] + delta_v, B_cf
+        B_cf = B[:,f] + delta_v
+
+
+# we calculate the new recommendation list R_cf
+R_cf = R # weet niet hoe ik dit moet doen
+
+
+# we take delta as the concatenation of delta_u and delta_v, delta = [delta_u, delta_v]
+delta = [delta_u, delta_v]
+# and we take hyper-parameter lambda as the weight of the counterfactual reasoning, between 0 and 1
+lambda = 0.5
 
 
 
