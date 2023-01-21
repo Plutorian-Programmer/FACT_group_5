@@ -13,6 +13,7 @@ model_path = "models\model.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 20
+A = rec_dataset.user_feature_matrix
 f1_score = compute_f1(rec_dataset.test_data, 
             rec_dataset.user_feature_matrix, 
             rec_dataset.item_feature_matrix, 
