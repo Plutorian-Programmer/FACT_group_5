@@ -22,6 +22,10 @@ model_path = "models\model.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 20
+
+recommendations = model.rec_dataset 
+print(recommendations)
+
 # We define A and B with use of the user and item feature matrices from the preprocessing step.
 A = rec_dataset.user_feature_matrix 
 B = rec_dataset.item_feature_matrix
