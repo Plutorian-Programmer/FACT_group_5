@@ -34,7 +34,7 @@ def trainmodel(train_args, pre_processing_args):
 
     model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
     loss_fn = torch.nn.BCELoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=train_args.lr)
+    optimizer = torch.optim.SGD(model.parameters(), lr=train_args.lr, weight_decay=1e-5)
 
     ndcg = compute_ndcg(rec_dataset.test_data, 
             rec_dataset.user_feature_matrix, 
@@ -45,7 +45,7 @@ def trainmodel(train_args, pre_processing_args):
     print('init ndcg:', ndcg)
 
     # Training loop
-    for epoch in tqdm.trange(100): #train_args.epoch
+    for epoch in tqdm.trange(50): #train_args.epoch
         model.train()
         optimizer.zero_grad()
         losses = []
