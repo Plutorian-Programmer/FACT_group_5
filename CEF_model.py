@@ -12,6 +12,9 @@ import numpy as np
 # B: The item-feature matrix
 # k: The number of items in the recommendation list
 
+
+
+
 # First we repeat "eval_model.py" to get A and B
 device = 'cpu'
 dataset_path = "models\Dataset_20.pickle"   #only 20
@@ -21,7 +24,7 @@ with open(dataset_path, "rb") as f:
 model_path = "models\model.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
-k = 20
+k = 5
 # We define A and B with use of the user and item feature matrices from the preprocessing step.
 A = rec_dataset.user_feature_matrix 
 B = rec_dataset.item_feature_matrix
