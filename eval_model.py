@@ -26,5 +26,5 @@ ndcg_score = compute_ndcg(rec_dataset.test_data,
             model, 
             device)
 
-print(f1_score)
-print(ndcg_score)
+print(f"F1: {f1_score}")
+print(f"NDCG: {ndcg_score}")
