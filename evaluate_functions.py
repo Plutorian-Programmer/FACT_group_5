@@ -10,7 +10,7 @@ def compute_ndcg(test_data, user_feature_matrix, item_feature_matrix, k, model, 
             user = row[0]
             items = row[1]
             gt_labels = row[2]
-            user_features = np.array([user_feature_matrix[user] for i in range(len(items))])
+            user_features = np.array([user_feature_matrix[user] for _ in range(len(items))])
             item_features = np.array([item_feature_matrix[item] for item in items])
             scores = model(torch.from_numpy(user_features).to(device),
                                     torch.from_numpy(item_features).to(device)).squeeze()
@@ -28,7 +28,7 @@ def compute_f1(test_data, user_feature_matrix, item_feature_matrix, k, model, de
             user = row[0]
             items = row[1]
             gt_labels = row[2]
-            user_features = np.array([user_feature_matrix[user] for i in range(len(items))])
+            user_features = np.array([user_feature_matrix[user] for _ in range(len(items))])
             item_features = np.array([item_feature_matrix[item] for item in items])
             scores = model(torch.from_numpy(user_features).to(device),
                                     torch.from_numpy(item_features).to(device)).squeeze()
@@ -55,13 +55,49 @@ def compute_f1(test_data, user_feature_matrix, item_feature_matrix, k, model, de
     ave_f1 = np.mean(f1_scores)
     return ave_f1
 
-def compute_long_tail(test_data, user_feature_matrix, item_feature_matrix, k, model, device):
+def compute_long_tail(test_data, user_feature_matrix, item_feature_matrix, k, model, device, G1):
+    model.eval()
+    long_tail_rates = []
+    true_len = len(G1)
     with torch.no_grad():
         for row in test_data:
             user = row[0]
             items = row[1]
-            user_features = np.array([user_feature_matrix[user] for i in range(len(items))])
+            user_features = np.array([user_feature_matrix[user] for _ in range(len(items))])
             item_features = np.array([item_feature_matrix[item] for item in items])
             scores = model(torch.from_numpy(user_features).to(device),
                                     torch.from_numpy(item_features).to(device)).squeeze()
             scores = np.array(scores.to('cpu'))
+            pred_items = np.argsort(scores)[-k:]
+            LT_rate = 0
+            for item in pred_items:
+                if item in G1:
+                    LT_rate += 1/k
+            long_tail_rates.append(LT_rate)
+    return np.mean(long_tail_rates)
+
+def compute_KL(test_data, user_feature_matrix, item_feature_matrix, k, model, device, G0, G1):
+    model.eval()
+    kl_scores = []
+    with torch.no_grad():
+        for row in test_data:
+            user = row[0]
+            items = row[1]
+            user_features = np.array([user_feature_matrix[user] for _ in range(len(items))])
+            item_features = np.array([item_feature_matrix[item] for item in items])
+            scores = model(torch.from_numpy(user_features).to(device),
+                                    torch.from_numpy(item_features).to(device)).squeeze()
+            scores = np.array(scores.to('cpu'))
+            pred_items = np.argsort(scores)[-k:]
+            true_dist = 0
+            for item in pred_items:
+                if item in G0:
+                    true_dist += 1/k
+            kl_score = 0
+            for item in pred_items:
+                if item in G0:
+                    kl_score += true_dist*np.log(true_dist/0.5)
+                else:
+                    kl_score += (1-true_dist) * np.log((1-true_dist)/0.5)
+            kl_scores.append(kl_score)
+    return np.mean(kl_scores)

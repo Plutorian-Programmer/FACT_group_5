@@ -145,3 +145,15 @@ def get_user_item_dict(sentiment_data):
         else:
             item_dict[item].append(user)
     return user_dict, item_dict
+
+def get_groups(dataset):
+    interaction_count = np.zeros(dataset.item_num)
+    for user in dataset.user_hist_inter_dict:
+        for item in dataset.user_hist_inter_dict[user]:
+            interaction_count[item] += 1
+
+    sorted_items = np.argsort(interaction_count)[::-1]
+    split = int(len(sorted_items)*0.2)
+    G0 = list(sorted_items[:split])
+    G1 = list(sorted_items[split:])
+    return G0, G1
