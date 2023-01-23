@@ -13,7 +13,6 @@ model_path = "models\model.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 20
-A = rec_dataset.user_feature_matrix
 f1_score = compute_f1(rec_dataset.test_data, 
             rec_dataset.user_feature_matrix, 
             rec_dataset.item_feature_matrix, 
@@ -29,3 +28,8 @@ ndcg_score = compute_ndcg(rec_dataset.test_data,
 
 print(f1_score)
 print(ndcg_score)
+
+print(rec_dataset.user_feature_matrix.shape)
+print(rec_dataset.user_feature_matrix)
+ # print model.forward() for 1 user and 1 item
+print(model.forward(torch.tensor(rec_dataset.user_feature_matrix[0]), torch.tensor(rec_dataset.item_feature_matrix[0])))
