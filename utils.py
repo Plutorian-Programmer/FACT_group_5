@@ -145,3 +145,14 @@ def get_user_item_dict(sentiment_data):
         else:
             item_dict[item].append(user)
     return user_dict, item_dict
+
+def split_groups(sentiment_data):
+    _, item_dict = get_user_item_dict(sentiment_data) #method from preprocessing return that returns: user dictionary {u1:[i, i, i...], u2:[i, i, i...]}, similarly, item dictionary --> we use the item dict
+    twenty_percent = round(0.2 * len(item_dict.keys()))
+    sortedlist = sorted(item_dict, key = lambda key: len(item_dict[key]), reverse=True)
+    g0 = sortedlist[:twenty_percent]
+    g1 = sortedlist[twenty_percent:]
+
+    return(g0, g1)
+
+    #this might be a lot of computational effort, because of the 2 times making the dict, looking for a more efficient way to do it. 

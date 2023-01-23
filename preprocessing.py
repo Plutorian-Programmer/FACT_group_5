@@ -1,8 +1,9 @@
 from args import arg_parser_preprocessing
-from utils import get_feature_list, sentiment_data_filtering, get_user_attention_matrix, get_item_quality_matrix, sample_training_pairs
+from utils import get_feature_list, sentiment_data_filtering, get_user_attention_matrix, get_item_quality_matrix, sample_training_pairs, split_groups
 import numpy as np
 from collections import Counter
 import json
+
 
 class Dataset():
     def __init__(self, preprocessing_args):
@@ -13,6 +14,8 @@ class Dataset():
         self.user_name_dict = {}  # rename users to integer names
         self.item_name_dict = {}
         self.feature_name_dict = {}
+        self.G0 = None
+        self.G1 = None
 
         self.features = []  # feature list
         self.users = []
@@ -131,6 +134,7 @@ class Dataset():
         users = list(user_hist_inter_dict.keys())
         items = list(item_hist_inter_dict.keys())
 
+        self.G0, self.G1 = split_groups(sentiment_data) #has to be the very last step for the indices to match
         self.sentiment_data = sentiment_data
         self.user_name_dict = user_name_dict
         self.item_name_dict = item_name_dict
