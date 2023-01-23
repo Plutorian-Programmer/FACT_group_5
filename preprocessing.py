@@ -204,7 +204,16 @@ class Dataset():
         self.test_data = np.array(user_item_label_list)
         return True
     
-
+    def remove_features(self, index_list, method="both"):
+        """
+        Removes features from both user and item matrices by setting all values to zero.
+        """
+        for feature in index_list:
+            if method != "item":
+                self.user_feature_matrix[:, feature] = 0
+            if method != "user":
+                self.item_feature_matrix[:, feature] = 0
+        return True
 
 def get_user_item_dict(sentiment_data):
     """
