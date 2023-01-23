@@ -60,15 +60,22 @@ def run_tests(dataset, model):
 print("run default")
 run_tests(rec_dataset, model)
 
+e_list = [5,10,20]
 print("run random")
-random_dataset = baseline_random(rec_dataset)
-run_tests(random_dataset, model)
+for e in e_list:
+    print(e)
+    random_dataset = baseline_random(rec_dataset, e)
+    run_tests(random_dataset, model)
 print("run pop item")
-pop_item_dataset = baseline_pop(rec_dataset, pop_method="item")
-run_tests(pop_item_dataset, model)
+for e in e_list:
+    print(e)    
+    pop_item_dataset = baseline_pop(rec_dataset, pop_method="item", e=e)
+    run_tests(pop_item_dataset, model)
 print("run pop user")
-pop_user_dataset = baseline_pop(rec_dataset, pop_method="user")
-run_tests(pop_user_dataset, model)
+for e in e_list:
+    print(e)    
+    pop_user_dataset = baseline_pop(rec_dataset, pop_method="user", e=e)
+    run_tests(pop_user_dataset, model)
 # f1_score_random = compute_f1(rec_dataset.test_data, 
 #             rec_dataset.user_feature_matrix, 
 #             rec_dataset.item_feature_matrix, 
