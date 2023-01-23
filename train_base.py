@@ -39,13 +39,13 @@ def trainmodel(train_args, pre_processing_args):
     ndcg = compute_ndcg(rec_dataset.test_data, 
             rec_dataset.user_feature_matrix, 
             rec_dataset.item_feature_matrix, 
-            train_args.rec_k, 
+            train_args.rec_k,  
             model, 
             device)
     print('init ndcg:', ndcg)
 
     # Training loop
-    for epoch in tqdm.trange(50): #train_args.epoch
+    for epoch in tqdm.trange(40): #train_args.epoch
         model.train()
         optimizer.zero_grad()
         losses = []

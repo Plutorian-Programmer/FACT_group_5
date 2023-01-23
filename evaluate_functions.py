@@ -54,3 +54,10 @@ def compute_f1(test_data, user_feature_matrix, item_feature_matrix, k, model, de
             f1_scores.append(f1)
     ave_f1 = np.mean(f1_scores)
     return ave_f1
+
+
+def compute_ltr(g0, g1):
+    """
+    Compute long tail rate, where g1 is the long-tailed group
+    """
+    return g1.exp / (g1.exp + g0.exp)
