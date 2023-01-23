@@ -15,6 +15,62 @@ import numpy as np
 
 
 
+def get_recommendations(item_feature_matrix, user_feature_matrix, test_data, k=5):
+    recommendations = {}
+
+    model.eval()
+    with torch.no_grad():
+        for row in test_data:
+            user = row[0]
+            recommendations[user] = []
+            items = row[1]
+            gt_labels = row[2]
+            user_features = np.array([user_feature_matrix[user] for i in range(len(items))])
+            item_features = np.array([item_feature_matrix[item] for item in items])
+            scores = model(torch.from_numpy(user_features).to(device),
+                                    torch.from_numpy(item_features).to(device)).squeeze() # het zijn 106 items ipv 105
+            scores = np.array(scores.to('cpu'))
+            # print(scores)
+            # print(len(scores))
+            indices = np.argsort(scores)[-k:] # indices (0-105) of items in the top k recs
+            for i in indices:
+                recommendations[user].append(items[i]) # Get item IDs of top ranked items
+
+    return recommendations 
+
+
+def exposures(recommendations, dataset_path="models\Dataset_20.pickle"):
+    with open(dataset_path, "rb") as f:
+        rec_dataset = pickle.load(f)
+    exposure_g0 = 0
+    exposure_g1 = 0
+    
+    for recommendation in recommendations:
+        for item in recommendation:
+            if item in rec_dataset.G0:
+                exposure_g0 += 1
+            elif item in rec_dataset.G1:
+                exposure_g1 += 1
+
+    return exposure_g0, exposure_g1
+
+
+if __name__ == "__main__":
+    device = 'cpu'
+    dataset_path="models/Dataset_20.pickle"
+    with open(dataset_path, "rb") as f:
+        rec_dataset = pickle.load(f)
+    model_path="models/model.model"
+    model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
+    model.load_state_dict(torch.load(model_path))
+    test_data = rec_dataset.test_data
+    item_feature_matrix = rec_dataset.item_feature_matrix
+    user_feature_matrix = rec_dataset.user_feature_matrix
+
+    recs = get_recommendations(item_feature_matrix, user_feature_matrix, test_data)
+
+
+
 # First we repeat "eval_model.py" to get A and B
 device = 'cpu'
 dataset_path = "models\Dataset_20.pickle"   #only 20

@@ -4,23 +4,6 @@ from models import BaseRecModel
 from args import *
 import pickle
 
-def get_recommendations():
-
-
-def exposures(recommendations):
-    exposure_g0 = 0
-    exposure_g1 = 0
-    
-    for recommendation in recommendations:
-        for item in recommendation:
-            if item in #g0
-
-
-    return
-
-
-
-
 device = 'cpu'
 dataset_path = "models/Dataset_20.pickle"
 with open(dataset_path, "rb") as f:
