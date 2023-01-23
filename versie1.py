@@ -22,10 +22,6 @@ model_path = "models\model.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 20
-
-recommendations = model.rec_dataset 
-print(recommendations)
-
 # We define A and B with use of the user and item feature matrices from the preprocessing step.
 A = rec_dataset.user_feature_matrix 
 B = rec_dataset.item_feature_matrix
@@ -40,26 +36,35 @@ with torch.no_grad():
         user_features = np.array([A[user] for i in range(len(items))])
         item_features = np.array([B[item] for item in items])
 
+
 # We calculate the recommendation list R with k = 20
-R = model(torch.tensor(user_features).float(), torch.tensor(item_features).float())
-R = R.cpu().numpy()
-R = np.argsort(R)[::-1][:k]
+### Weet niet hoe ik dit moet doen  
+# R = model(torch.tensor(user_features).float(), torch.tensor(item_features).float())
+# R = R.cpu().numpy()
+# R = np.argsort(R)[::-1][:k]
 
-# We have two groups of users, g0 and g1, and we want to recommend items to them.
-# exposure of recommendation model g is the number of items in R that g0 has interacted with.
+# We define U as the set of users that have interacted with at least one item in R
+# U = []
+# for user in R:
+#     if user in U:
+#         continue
+#     else:
+#         U.append(user)
 
-def exposure(g, R, user_history):
-    g_exposure = 0
-    for user in R:
-        if user_history[user][0] == g:
-            g_exposure += 1
-    return g_exposure
+ 
+ # exposure of recommendation model g is the number of items in R that g0 has interacted with and are in U
+def exposure(g, R, U):
+    exposure = 0
+    for user in U:
+        if user in R:
+            exposure += 1
+    return exposure
 
 
 # calculate a quantification measure for diparity
-def disparity(R, user_history):
-    g0_exposure = exposure(0, R, user_history)
-    g1_exposure = exposure(1, R, user_history)
+def disparity(R, U):
+    g0_exposure = exposure(0, R, U)
+    g1_exposure = exposure(1, R, U)
 
     # take the difference between the two sides of the equalities as a quantification measure for disparity
     # theta_DP = abs(G1) * Exposure (G0 |R𝐾) − abs(G0) * Exposure (G1 |R𝐾)
@@ -67,7 +72,7 @@ def disparity(R, user_history):
     theta_DP = len(g1_exposure) * g0_exposure - len(g0_exposure) * g1_exposure
     return theta_DP
 
-#Counterfactual reasoning
+###Counterfactual reasoning
 # for each user-feature vector A[:,f], we intervene with a vector delta_u (in R^m) to obtain a new user-feature vector A[:,f] + delta_u
 for f in range(len(A)):
     for delta_u in range(len(A[f])):
@@ -81,7 +86,7 @@ for f in range(len(B)):
 
 
 # we calculate the new recommendation list R_cf
-R_cf = R # weet niet hoe ik dit moet doen
+# R_cf = R # weet niet hoe ik dit moet doen
 
 
 # we take delta as the concatenation of delta_u and delta_v, delta = [delta_u, delta_v]
@@ -89,4 +94,5 @@ delta = [delta_u, delta_v]
 # and we take hyper-parameter lambda as the weight of the counterfactual reasoning, between 0 and 1
 l = 0.5
 
-
+# We calculate the counterfactual fairness measure theta_CF
+# theta_CF = l * disparity(R_cf, U) + (1 - l) * disparity(R, U)
