@@ -3,7 +3,7 @@ from utils import get_feature_list, sentiment_data_filtering, get_user_attention
 import numpy as np
 from collections import Counter
 import json
-
+from group import Group
 
 class Dataset():
     def __init__(self, preprocessing_args):
@@ -134,7 +134,8 @@ class Dataset():
         users = list(user_hist_inter_dict.keys())
         items = list(item_hist_inter_dict.keys())
 
-        self.G0, self.G1 = split_groups(sentiment_data) #has to be the very last step for the indices to match
+        self.G0 = split_groups(sentiment_data)[0] #Group(sentiment_data, long_tail=False) 
+        self.G1 = split_groups(sentiment_data)[1] #Group(sentiment_data, long_tail=True) #has to be the very last step for the indices to match
         self.sentiment_data = sentiment_data
         self.user_name_dict = user_name_dict
         self.item_name_dict = item_name_dict

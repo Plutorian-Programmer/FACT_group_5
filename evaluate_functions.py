@@ -31,7 +31,7 @@ def compute_f1(test_data, user_feature_matrix, item_feature_matrix, k, model, de
             user_features = np.array([user_feature_matrix[user] for i in range(len(items))])
             item_features = np.array([item_feature_matrix[item] for item in items])
             scores = model(torch.from_numpy(user_features).to(device),
-                                    torch.from_numpy(item_features).to(device)).squeeze()
+                                    torch.from_numpy(item_features).to(device)).squeeze() # het zijn 106 items ipv 105
             scores = np.array(scores.to('cpu'))
             # print(scores)
             # print(len(scores))
@@ -54,3 +54,10 @@ def compute_f1(test_data, user_feature_matrix, item_feature_matrix, k, model, de
             f1_scores.append(f1)
     ave_f1 = np.mean(f1_scores)
     return ave_f1
+
+
+def compute_ltr(g0, g1):
+    """
+    Compute long tail rate, where g1 is the long-tailed group
+    """
+    return g1 / (g1 + g0)
