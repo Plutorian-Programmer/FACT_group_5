@@ -12,15 +12,15 @@ from evaluate_functions import compute_ltr
 # A: The user-feature matrix
 # B: The item-feature matrix
 # k: The number of items in the recommendation list
+ 
 
 class CEF():
     dataset = None
     basemodel = None
-    delta_v = None
-    delta_u = None
     recommendations = None
     device = None
     exposure = None
+    delta = None
     
 
     def __init__(self):
@@ -40,10 +40,8 @@ class CEF():
                                                         self.dataset.user_feature_matrix,
                                                         k=5)
 
-        self.delta_v = np.random.randn(*self.dataset.item_feature_matrix.shape) / 10
-        self.delta_u = np.random.randn(*self.dataset.user_feature_matrix.shape) / 10
-        self.params = [torch.nn.parameter.Parameter(torch.from_numpy(self.delta_v)), 
-                    torch.nn.parameter.Parameter(torch.from_numpy(self.delta_u))]
+        self.delta = np.random.randn(self.dataset.item_feature_matrix.shape[1]) / 10
+        self.params = [torch.nn.Parameter(torch.Tensor([d])) for d in self.delta]
 
     def update_recommendations(self, item_feature_matrix, user_feature_matrix, k=5):
         self.recommendations = {}
@@ -84,19 +82,6 @@ class CEF():
         disparity = disparity / total
         return disparity
 
-    def update_recommendations_cf(self, delta_v, delta_u):
-        np.random.seed(42)
-        dataset = self.dataset
-
-        item_feature_matrix = dataset.item_feature_matrix + delta_v
-        user_feature_matrix = dataset.user_feature_matrix + delta_u
-
-        self.recommendations = self.get_recommendations(dataset.item_feature_matrix, dataset.user_feature_matrix, dataset.test_data)
-        self.update_exposures()
-        disparity = self.get_cf_disparity(self.recommendations)
-
-        return disparity
-
     def update_exposures(self):
         exposure_g0 = 0
         exposure_g1 = 0
@@ -117,40 +102,40 @@ class CEF():
         print(f"long tail rate: {ltr}")
 
 
-    def loss_fn(self, disparity, ld, delta_v, delta_u):
-        return disparity**2 + ld * np.linalg.norm( np.concatenate((delta_u, delta_v)))
+    def loss_fn(self, disparity, ld, delta):
+        return disparity**2 + ld * np.linalg.norm( np.array([param.detach() for param in delta], dtype='float32'))
 
 
     def train_delta(self):
         ld = 1
         lr = 0.01
         # Init values
-        self.delta_v = np.random.randn(*self.dataset.item_feature_matrix.shape) / 10
-        self.delta_u = np.random.randn(*self.dataset.user_feature_matrix.shape) / 10
-        adjusted_if_matrix = self.dataset.item_feature_matrix + self.delta_v
-        adjusted_uf_matrix = self.dataset.user_feature_matrix + self.delta_u
+        self.delta = np.random.randn(self.dataset.item_feature_matrix.shape[1]) / 10
+        self.params = [torch.nn.Parameter(torch.Tensor([d])) for d in self.delta]
+
+        adjusted_if_matrix = self.dataset.item_feature_matrix.copy()
+        adjusted_uf_matrix = self.dataset.item_feature_matrix.copy()
+        adjusted_if_matrix[0,:] += self.delta
 
         self.update_recommendations(adjusted_if_matrix, adjusted_uf_matrix)
         disparity = self.get_cf_disparity(self.recommendations)
 
-        params = self.params
-        optimizer = torch.optim.Adam(params,lr=lr, betas=(0.9,0.999))
+        optimizer = torch.optim.Adam(self.params,lr=lr, betas=(0.9,0.999))
         loss_fn = self.loss_fn
 
         for i in range(10):
             optimizer.zero_grad()
 
-            self.delta_v = np.array(params[0].detach())
-            self.delta_u = np.array(params[1].detach())
+            self.delta = np.array([param.detach() for param in self.params], dtype='float32')
 
-            adjusted_if_matrix = self.dataset.item_feature_matrix + self.delta_v
-            adjusted_uf_matrix = self.dataset.user_feature_matrix + self.delta_u
-            
+            adjusted_if_matrix = self.dataset.item_feature_matrix.copy()
+            adjusted_uf_matrix = self.dataset.item_feature_matrix.copy()
+            adjusted_if_matrix[0,:] += self.delta
+                
             self.update_recommendations(adjusted_if_matrix, adjusted_uf_matrix)
             disparity = self.get_cf_disparity(self.recommendations)
             
-
-            loss = loss_fn(disparity, ld, self.delta_v, self.delta_u)
+            loss = loss_fn(disparity, ld, self.params)
             loss.backward()
             optimizer.step()
 
@@ -168,3 +153,17 @@ if __name__ == "__main__":
     CEF_model.train_delta()
 
 
+
+
+    # def update_recommendations_cf(self, delta_v, delta_u):
+    #     np.random.seed(42)
+    #     dataset = self.dataset
+
+    #     item_feature_matrix = dataset.item_feature_matrix + delta_v
+    #     user_feature_matrix = dataset.user_feature_matrix + delta_u
+
+    #     self.recommendations = self.get_recommendations(dataset.item_feature_matrix, dataset.user_feature_matrix, dataset.test_data)
+    #     self.update_exposures()
+    #     disparity = self.get_cf_disparity(self.recommendations)
+
+    #     return disparity
