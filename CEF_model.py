@@ -13,195 +13,74 @@ from evaluate_functions import compute_ltr
 # B: The item-feature matrix
 # k: The number of items in the recommendation list
 
-def get_recommendations(item_feature_matrix, user_feature_matrix, test_data, k=5):
-    recommendations = {}
+class CEF():
+    dataset = None
+    basemodel = None
+    delta = None
+    recommendations = None
+    device = None
 
-    model.eval()
-    with torch.no_grad():
-        for row in test_data:
+    def __init__(self):
+        self.device = 'cpu'
+        dataset_path="models/Dataset_20.pickle"
+        model_path="models/model_20.model"
+
+        with open(dataset_path, "rb") as f:
+            self.dataset = pickle.load(f)
+        
+        self.basemodel = BaseRecModel(self.dataset.feature_num, self.dataset).to(device)
+        self.basemodel.load_state_dict(torch.load(model_path))
+
+
+    def get_recommendations(self, item_feature_matrix, user_feature_matrix, test_data, k=5):
+        self.recommendations = {}
+
+        self.basemodel.eval()
+        with torch.no_grad():
+            for row in test_data:
+                user = row[0]
+                self.recommendations[user] = []
+                items = row[1]
+                gt_labels = row[2]
+                user_features = np.array([user_feature_matrix[user] for i in range(len(items))])
+                item_features = np.array([item_feature_matrix[item] for item in items])
+                scores = self.basemodel(torch.from_numpy(user_features).to(self.device),
+                                        torch.from_numpy(item_features).to(self.device)).squeeze() # het zijn 106 items ipv 105
+                scores = np.array(scores.to('cpu'))
+                indices = np.argsort(scores)[-k:] # indices (0-105) of items in the top k recs
+                for i in indices:
+                    self.recommendations[user].append(items[i]) # Get item IDs of top ranked items
+
+        return  
+
+    def get_cf_disparity(self, recommendations):
+        disparity = 0
+        total = 0
+        c = self.dataset.G0.mag / self.dataset.G1.mag
+        for row in self.dataset.test_data:
             user = row[0]
-            recommendations[user] = []
-            items = row[1]
-            gt_labels = row[2]
-            user_features = np.array([user_feature_matrix[user] for i in range(len(items))])
-            item_features = np.array([item_feature_matrix[item] for item in items])
-            scores = model(torch.from_numpy(user_features).to(device),
-                                    torch.from_numpy(item_features).to(device)).squeeze() # het zijn 106 items ipv 105
-            scores = np.array(scores.to('cpu'))
-            indices = np.argsort(scores)[-k:] # indices (0-105) of items in the top k recs
-            for i in indices:
-                recommendations[user].append(items[i]) # Get item IDs of top ranked items
+            recommendations = recommendations[user]
+            for item in recommendations:
+                if item in self.dataset.G0.items:
+                    disparity += self.basemodel(torch.from_numpy(self.dataset.user_feature_matrix[user]), torch.from_numpy(self.dataset.item_feature_matrix[item]))
+                elif item in self.dataset.G1.items:
+                    disparity -= c * self.basemodel(torch.from_numpy(self.dataset.user_feature_matrix[user]), torch.from_numpy(self.dataset.item_feature_matrix[item]))
 
-    return recommendations 
+                total += self.basemodel(torch.from_numpy(self.dataset.user_feature_matrix[user]), torch.from_numpy(self.dataset.item_feature_matrix[item]))
 
+        disparity = disparity / total
+        return disparity
 
-def get_exposures(recommendations, rec_dataset):
-    exposure_g0 = 0
-    exposure_g1 = 0
-    
-    for recs in recommendations.values():
-        for item in recs:
-            if item in rec_dataset.G0.items:
-                exposure_g0 += 1
-            elif item in rec_dataset.G1.items:
-                exposure_g1 += 1
-    rec_dataset.G0.exp = exposure_g0
-    rec_dataset.G1.exp = exposure_g1
-    return rec_dataset
+    def update_recommendations_cf(self, rec_dataset, item_feature_matrix, user_feature_matrix, test_data):
+        np.random.seed(42)
+        delta_v = np.random.randn(*item_feature_matrix.shape) / 10
+        delta_u = np.random.randn(*user_feature_matrix.shape) / 10
+        
+        item_feature_matrix = rec_dataset.item_feature_matrix + delta_v
+        user_feature_matrix = rec_dataset.user_feature_matrix + delta_u
 
-def get_disparity(rec_dataset):
-    G0 = rec_dataset.G0
-    G1 = rec_dataset.G1
-    disp = G1.mag * G0.exp - G0.mag * G1.exp
-    
-    # size_g0 = len(rec_dataset.G0)
-    # size_g1 = len(rec_dataset.G1)
-    # disp = size_g1 * exp_g0 - size_g0 * exp_g1
-    return disp
+        self.recommendations = self.get_recommendations(item_feature_matrix, user_feature_matrix, test_data)
+        # rec_dataset = get_exposures(recs, rec_dataset) #update group exposures in rec_dataset
+        disparity = self.get_cf_disparity(self.recommendations)
 
-def get_cf_disparity(rec_dataset, recs):
-    disparity = 0
-    total = 0
-    c = rec_dataset.G0.mag / rec_dataset.G1.mag
-    for row in rec_dataset.test_data:
-        user = row[0]
-        recommendations = recs[user]
-        for item in recommendations:
-            if item in rec_dataset.G0.items:
-                disparity += model(torch.from_numpy(user_feature_matrix[user]), torch.from_numpy(item_feature_matrix[item]))
-            elif item in rec_dataset.G1.items:
-                disparity -= c * model(torch.from_numpy(user_feature_matrix[user]), torch.from_numpy(item_feature_matrix[item]))
-
-            total += model(torch.from_numpy(user_feature_matrix[user]), torch.from_numpy(item_feature_matrix[item]))
-
-    disparity = disparity / total
-    return disparity
-
-def update_recommendations_cf(rec_dataset, item_feature_matrix, user_feature_matrix, test_data):
-    np.random.seed(42)
-    delta_v = np.random.randn(*item_feature_matrix.shape) / 10
-    delta_u = np.random.randn(*user_feature_matrix.shape) / 10
-    
-    item_feature_matrix = rec_dataset.item_feature_matrix + delta_v
-    user_feature_matrix = rec_dataset.user_feature_matrix + delta_u
-
-    recs = get_recommendations(item_feature_matrix, user_feature_matrix, test_data)
-    rec_dataset = get_exposures(recs, rec_dataset) #update group exposures in rec_dataset
-    disp = get_cf_disparity(rec_dataset, recs)
-    return disp, rec_dataset
-
-
-if __name__ == "__main__":
-    device = 'cpu'
-    dataset_path="models/Dataset_20.pickle"
-    with open(dataset_path, "rb") as f:
-        rec_dataset = pickle.load(f)
-    model_path="models/model_20.model"
-    model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
-    model.load_state_dict(torch.load(model_path))
-    test_data = rec_dataset.test_data
-    item_feature_matrix = rec_dataset.item_feature_matrix
-    user_feature_matrix = rec_dataset.user_feature_matrix
-
-    # Initial disparity
-    recs = get_recommendations(item_feature_matrix, user_feature_matrix, test_data)
-    rec_dataset = get_exposures(recs, rec_dataset)
-    disp = get_disparity(rec_dataset)
-    print(f"long tail rate before delta: {compute_ltr(rec_dataset.G0, rec_dataset.G1)}")
-
-    # Counterfactual change
-    disparity, rec_dataset = update_recommendations_cf(rec_dataset, item_feature_matrix, user_feature_matrix, test_data)
-
-    print(f"long tail rate after delta: {compute_ltr(rec_dataset.G0, rec_dataset.G1)}")
-    
-    
-
-
-
-
-
-
-# # First we repeat "eval_model.py" to get A and B
-# device = 'cpu'
-# dataset_path = "models\Dataset_20.pickle"   #only 20
-# with open(dataset_path, "rb") as f:
-#     rec_dataset = pickle.load(f)
-
-# model_path = "models\model.model"
-# model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
-# model.load_state_dict(torch.load(model_path))
-# k = 5
-# # We define A and B with use of the user and item feature matrices from the preprocessing step.
-# A = rec_dataset.user_feature_matrix 
-# B = rec_dataset.item_feature_matrix
-# test_data = rec_dataset.test_data 
-
-# model.eval()
-# with torch.no_grad():
-#     for row in test_data:
-#         user = row[0]
-#         items = row[1]
-#         gt_labels = row[2]
-#         user_features = np.array([A[user] for i in range(len(items))])
-#         item_features = np.array([B[item] for item in items])
-
-
-# # We calculate the recommendation list R with k = 20
-# ### Weet niet hoe ik dit moet doen  
-# # R = model(torch.tensor(user_features).float(), torch.tensor(item_features).float())
-# # R = R.cpu().numpy()
-# # R = np.argsort(R)[::-1][:k]
-
-# # We define U as the set of users that have interacted with at least one item in R
-# # U = []
-# # for user in R:
-# #     if user in U:
-# #         continue
-# #     else:
-# #         U.append(user)
-
- 
-#  # exposure of recommendation model g is the number of items in R that g0 has interacted with and are in U
-# def exposure(g, R, U):
-#     exposure = 0
-#     for user in U:
-#         if user in R:
-#             exposure += 1
-#     return exposure
-
-
-# # calculate a quantification measure for diparity
-# def disparity(R, U):
-#     g0_exposure = exposure(0, R, U)
-#     g1_exposure = exposure(1, R, U)
-
-#     # take the difference between the two sides of the equalities as a quantification measure for disparity
-#     # theta_DP = abs(G1) * Exposure (G0 |R𝐾) − abs(G0) * Exposure (G1 |R𝐾)
-#     ##### weet niet hoe ik de absolute waarde van g0 moet nemen, is dat de totale lengte van de lijst?
-#     theta_DP = len(g1_exposure) * g0_exposure - len(g0_exposure) * g1_exposure
-#     return theta_DP
-
-# ###Counterfactual reasoning
-# # for each user-feature vector A[:,f], we intervene with a vector delta_u (in R^m) to obtain a new user-feature vector A[:,f] + delta_u
-# for f in range(len(A)):
-#     for delta_u in range(len(A[f])):
-#         # we create a new user-feature vector A[:,f] + delta_u, A_cf
-#         A_cf = A[:,f] + delta_u
-# # for each item-feature vector B[:,f], we intervene with a vector delta_v (in R^m) to obtain a new item-feature vector B[:,f] + delta_v
-# for f in range(len(B)):
-#     for delta_v in range(len(B[f])):
-#         # we create a new item-feature vector B[:,f] + delta_v, B_cf
-#         B_cf = B[:,f] + delta_v
-
-
-# # we calculate the new recommendation list R_cf
-# # R_cf = R # weet niet hoe ik dit moet doen
-
-
-# # we take delta as the concatenation of delta_u and delta_v, delta = [delta_u, delta_v]
-# delta = [delta_u, delta_v]
-# # and we take hyper-parameter lambda as the weight of the counterfactual reasoning, between 0 and 1
-# l = 0.5
-
-# # We calculate the counterfactual fairness measure theta_CF
-# # theta_CF = l * disparity(R_cf, U) + (1 - l) * disparity(R, U)
+        return disparity
