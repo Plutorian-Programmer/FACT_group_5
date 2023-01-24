@@ -60,4 +60,4 @@ def compute_ltr(g0, g1):
     """
     Compute long tail rate, where g1 is the long-tailed group
     """
-    return g1.exp / (g1.exp + g0.exp)
+    return g1 / (g1 + g0)

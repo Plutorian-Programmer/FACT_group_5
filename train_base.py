@@ -45,7 +45,7 @@ def trainmodel(train_args, pre_processing_args):
     print('init ndcg:', ndcg)
 
     # Training loop
-    for epoch in tqdm.trange(40): #train_args.epoch
+    for epoch in tqdm.trange(10): #train_args.epoch
         model.train()
         optimizer.zero_grad()
         losses = []

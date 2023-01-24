@@ -19,6 +19,7 @@ class CEF():
     delta = None
     recommendations = None
     device = None
+    exposure = None
 
     def __init__(self):
         self.device = 'cpu'
@@ -28,9 +29,15 @@ class CEF():
         with open(dataset_path, "rb") as f:
             self.dataset = pickle.load(f)
         
-        self.basemodel = BaseRecModel(self.dataset.feature_num, self.dataset).to(device)
+        self.basemodel = BaseRecModel(self.dataset.feature_num, self.dataset).to(self.device)
         self.basemodel.load_state_dict(torch.load(model_path))
 
+        self.exposure = dict()
+
+        self.get_recommendations(self.dataset.item_feature_matrix, 
+                                                        self.dataset.user_feature_matrix, 
+                                                        self.dataset.test_data, 
+                                                        k=5)
 
     def get_recommendations(self, item_feature_matrix, user_feature_matrix, test_data, k=5):
         self.recommendations = {}
@@ -50,8 +57,7 @@ class CEF():
                 indices = np.argsort(scores)[-k:] # indices (0-105) of items in the top k recs
                 for i in indices:
                     self.recommendations[user].append(items[i]) # Get item IDs of top ranked items
-
-        return  
+ 
 
     def get_cf_disparity(self, recommendations):
         disparity = 0
@@ -84,3 +90,29 @@ class CEF():
         disparity = self.get_cf_disparity(self.recommendations)
 
         return disparity
+
+    def update_exposures(self):
+        exposure_g0 = 0
+        exposure_g1 = 0
+        
+        for recs in self.recommendations.values():
+            for item in recs:
+                if item in self.dataset.G0:
+                    exposure_g0 += 1
+                elif item in self.dataset.G1:
+                    exposure_g1 += 1
+        self.exposure["G0"] = exposure_g0
+        self.exposure["G1"] = exposure_g1
+
+
+    def evaluate_model(self):
+        self.update_exposures()
+        ltr = compute_ltr(self.exposure["G0"], self.exposure["G1"])
+        print(f"long tail rate: {ltr}")
+
+
+if __name__ == "__main__":
+    CEF_model = CEF()
+    CEF_model.evaluate_model()
+
+
