@@ -3,7 +3,6 @@ from utils import get_feature_list, sentiment_data_filtering, get_user_attention
 import numpy as np
 from collections import Counter
 import json
-from group import Group
 
 class Dataset():
     def __init__(self, preprocessing_args):
