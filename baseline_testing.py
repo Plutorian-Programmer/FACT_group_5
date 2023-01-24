@@ -36,3 +36,7 @@ bottom_sum = np.sum(interaction_count) - top_sum
 
 print(top_sum)
 print(bottom_sum)
+print(interaction_count[top[0]])
+print(interaction_count[top[-1]])
+print(interaction_count[bottom[0]])
+print(interaction_count[bottom[-1]])

@@ -56,9 +56,11 @@ def compute_f1(test_data, user_feature_matrix, item_feature_matrix, k, model, de
     return ave_f1
 
 def compute_long_tail(test_data, user_feature_matrix, item_feature_matrix, k, model, device, G1):
+    #my results are opposite of paper
     model.eval()
     long_tail_rates = []
-    true_len = len(G1)
+    G0_exposure = 0
+    G1_exposure = 0
     with torch.no_grad():
         for row in test_data:
             user = row[0]
@@ -72,9 +74,10 @@ def compute_long_tail(test_data, user_feature_matrix, item_feature_matrix, k, mo
             LT_rate = 0
             for item in pred_items:
                 if item in G1:
-                    LT_rate += 1/k
-            long_tail_rates.append(LT_rate)
-    return np.mean(long_tail_rates)
+                    G1_exposure += 1
+                else:
+                    G0_exposure += 1
+    return G1_exposure / (G1_exposure / G0_exposure)
 
 def compute_KL(test_data, user_feature_matrix, item_feature_matrix, k, model, device, G0, G1):
     model.eval()
