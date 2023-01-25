@@ -7,11 +7,11 @@ from args import *
 import pickle
 
 device = 'cpu'
-dataset_path = "models\Dataset.pickle"
+dataset_path = "models/Dataset_20.pickle"
 with open(dataset_path, "rb") as f:
     rec_dataset = pickle.load(f)
 
-model_path = "models\model.model"
+model_path = "models/model_20.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 5
@@ -34,7 +34,7 @@ def run_tests(dataset, model):
                             k, 
                             model, 
                             device)
-    G0, G1 = get_groups(dataset)
+    G0, G1 = dataset.G0, dataset.G1
     LT_rate = compute_long_tail(test_data, 
                                 user_feature_matrix, 
                                 item_feature_matrix, 
