@@ -4,6 +4,7 @@ from args import *
 import pickle
 import numpy as np
 from evaluate_functions import compute_ltr
+import tqdm
 
 # We define the following variables:
 # R: the recommendation list
@@ -14,16 +15,19 @@ from evaluate_functions import compute_ltr
 # k: The number of items in the recommendation list
  
 
-class CEF():
-    dataset = None
-    basemodel = None
-    recommendations = None
-    device = None
-    exposure = None
-    delta = None
+
+
+class CEF(torch.nn.Module):
+    # dataset = None
+    # basemodel = None
+    # recommendations = None
+    # device = None
+    # exposure = None
+    # delta = None
     
 
     def __init__(self):
+        super(CEF, self).__init__()
         self.device = 'cpu'
         dataset_path="models/Dataset_20.pickle"
         model_path="models/model_20.model"
@@ -36,12 +40,12 @@ class CEF():
 
         self.exposure = dict()
 
+        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape[1]))
+
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
                                                         k=5)
 
-        self.delta = np.random.randn(self.dataset.item_feature_matrix.shape[1]) / 10
-        self.params = [torch.nn.Parameter(torch.Tensor([d])) for d in self.delta]
 
     def update_recommendations(self, item_feature_matrix, user_feature_matrix, k=5):
         self.recommendations = {}
@@ -64,20 +68,23 @@ class CEF():
                     self.recommendations[user].append(items[i]) # Get item IDs of top ranked items
  
 
-    def get_cf_disparity(self, recommendations):
+    def get_cf_disparity(self, recommendations, if_matrix, uf_matrix):
         disparity = 0
         total = 0
         c = len(self.dataset.G0) / len(self.dataset.G1)
         for row in self.dataset.test_data:
             user = row[0]
             recommendations = self.recommendations[user]
+            self.basemodel.eval()
             for item in recommendations:
                 if item in self.dataset.G0:
-                    disparity += self.basemodel(torch.from_numpy(self.dataset.user_feature_matrix[user]), torch.from_numpy(self.dataset.item_feature_matrix[item]))
+                    x = self.basemodel(uf_matrix[user],if_matrix[item])
+                    disparity += x
+                    total += x
                 elif item in self.dataset.G1:
-                    disparity -= c * self.basemodel(torch.from_numpy(self.dataset.user_feature_matrix[user]), torch.from_numpy(self.dataset.item_feature_matrix[item]))
-
-                total += self.basemodel(torch.from_numpy(self.dataset.user_feature_matrix[user]), torch.from_numpy(self.dataset.item_feature_matrix[item]))
+                    x = c * self.basemodel(uf_matrix[user], if_matrix[item])
+                    disparity -= x
+                    total += x
 
         disparity = disparity / total
         return disparity
@@ -103,54 +110,57 @@ class CEF():
 
 
     def loss_fn(self, disparity, ld, delta):
-        return disparity**2 + ld * np.linalg.norm( np.array([param.detach() for param in delta], dtype='float32'))
+        return disparity**2 + ld * torch.linalg.norm(delta)
 
 
-    def train_delta(self):
-        ld = 1
-        lr = 0.01
-        # Init values
-        self.delta = np.random.randn(self.dataset.item_feature_matrix.shape[1]) / 10
-        self.params = [torch.nn.Parameter(torch.Tensor([d])) for d in self.delta]
+def train_delta():
+    ld = 1
+    lr = 0.01
+    # Init values
+    model = CEF()
+    # print(list(model.parameters()))
+    if_matrix = torch.Tensor(model.dataset.item_feature_matrix.copy())
+    uf_matrix = torch.Tensor(model.dataset.user_feature_matrix.copy())
+    adjusted_if_matrix = if_matrix.clone().detach()
+    adjusted_uf_matrix = uf_matrix.clone().detach()
+    adjusted_if_matrix[0,:] += model.delta
 
-        adjusted_if_matrix = self.dataset.item_feature_matrix.copy()
-        adjusted_uf_matrix = self.dataset.item_feature_matrix.copy()
-        adjusted_if_matrix[0,:] += self.delta
+    model.update_recommendations(adjusted_if_matrix.detach().numpy(), adjusted_uf_matrix.detach().numpy())
+    disparity = model.get_cf_disparity(model.recommendations, adjusted_if_matrix, adjusted_uf_matrix)
 
-        self.update_recommendations(adjusted_if_matrix, adjusted_uf_matrix)
-        disparity = self.get_cf_disparity(self.recommendations)
+    # model.delta.retain_grad = True
+    optimizer = torch.optim.Adam([model.delta],lr=lr*10, betas=(0.9,0.999))
+    # loss_fn = model.loss_fn
 
-        optimizer = torch.optim.Adam(self.params,lr=lr, betas=(0.9,0.999))
-        loss_fn = self.loss_fn
+    for i in tqdm.trange(30):
+        model.train()
+        optimizer.zero_grad()
 
-        for i in range(10):
-            optimizer.zero_grad()
-
-            self.delta = np.array([param.detach() for param in self.params], dtype='float32')
-
-            adjusted_if_matrix = self.dataset.item_feature_matrix.copy()
-            adjusted_uf_matrix = self.dataset.item_feature_matrix.copy()
-            adjusted_if_matrix[0,:] += self.delta
-                
-            self.update_recommendations(adjusted_if_matrix, adjusted_uf_matrix)
-            disparity = self.get_cf_disparity(self.recommendations)
+        adjusted_if_matrix = if_matrix.clone().detach()
+        adjusted_uf_matrix = uf_matrix.clone().detach()
+        adjusted_if_matrix[0,:] += model.delta
             
-            loss = loss_fn(disparity, ld, self.params)
-            loss.backward()
-            optimizer.step()
+        model.update_recommendations(adjusted_if_matrix.detach().numpy(), adjusted_uf_matrix.detach().numpy())
+        disparity = model.get_cf_disparity(model.recommendations, adjusted_if_matrix, adjusted_uf_matrix)
+        
+        # loss = loss_fn(disparity, ld, model.delta)
+        loss = model.loss_fn(disparity, ld, model.delta)
+        loss.backward()
+        print(model.delta.grad.norm())
+        optimizer.step()
 
-            print(f"epoch {i}")
-            print(f"Disparity: {disparity}")
-            print(f"loss: {loss}")
+        print(f"epoch {i}")
+        print(f"Disparity: {disparity}")
+        print(f"loss: {loss}")
 
-            self.evaluate_model()
+        model.evaluate_model()
 
 
 
 if __name__ == "__main__":
-    CEF_model = CEF()
-    CEF_model.evaluate_model()
-    CEF_model.train_delta()
+    # CEF_model = CEF()
+    # CEF_model.evaluate_model()
+    train_delta()
 
 
 

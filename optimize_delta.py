@@ -1,3 +1,4 @@
+import numpy as np
 # from CEF_model import *
 
 
@@ -29,7 +30,7 @@
 # #update param delta 
 
 
-def explainability_scores(self, feature):
+def explainability_scores(self, feature, delta, k=5):
 #generate feature-based explanations based on updated exposures 
     og_exp0 = self.og_exposure["G0"]
     og_exp1 = self.og_exposure["G1"]
@@ -38,10 +39,10 @@ def explainability_scores(self, feature):
     cf_exp1 = self.exposure["G1"]
 
     m = len(user_feature_matrix[0])     #number of users
-    K = 20                              #length of recommendation lists
+    # K = 20                              #length of recommendation lists
     beta = 0.5
 
-    validity = ((og_exp0 - og_exp1) / m * K)  - ((cf_exp0 - cf_exp1) / m * K)
+    validity = ((og_exp0 - og_exp1) / m * K)  - ((cf_exp0 - cf_exp1) / m * k)
     proximity = (np.linalg.norm(delta) **2)
     ES = validity - beta * proximity
 
