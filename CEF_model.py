@@ -42,7 +42,7 @@ class CEF(torch.nn.Module):
 
         self.exposure = dict()
 
-        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape[0]))
+        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape))
 
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
@@ -70,8 +70,7 @@ class CEF(torch.nn.Module):
                     self.recommendations[user].append(items[i]) # Get item IDs of top ranked items
  
 
-    def get_cf_disparity(self, recommendations, if_matrix, uf_matrix, delta):
-        if_matrix[:,0] = if_matrix[:,0] + delta
+    def get_cf_disparity(self, recommendations, if_matrix, uf_matrix):
         disparity = 0
         total = 0
         c = len(self.dataset.G0) / len(self.dataset.G1)
@@ -113,10 +112,9 @@ class CEF(torch.nn.Module):
         print(f"long tail rate: {ltr}")
 
 
-    def loss_fn(self, if_matrix, uf_matrix, ld, delta):
-        disparity = self.get_cf_disparity(self.recommendations, if_matrix, uf_matrix, delta)
-        loss = disparity**2 + ld * torch.linalg.norm(delta)
-        return loss, disparity
+    def loss_fn(self, disparity, ld, delta):
+        loss = disparity * disparity #+ ld * torch.linalg.norm(delta)
+        return loss
 
 
 def train_delta():
@@ -124,29 +122,26 @@ def train_delta():
     lr = 0.01
     # Init values
     model = CEF()
-    delta = model.delta
     if_matrix = torch.Tensor(model.dataset.item_feature_matrix)
     uf_matrix = torch.Tensor(model.dataset.user_feature_matrix)
-    optimizer = torch.optim.Adam([delta],lr=lr*10, betas=(0.9,0.999))
+    optimizer = torch.optim.Adam([model.delta],lr=lr*1, betas=(0.9,0.999))
 
     # for i, p in enumerate(model.parameters()):
     #     if i > 0:
     #         p.requires_grad = False
 
-    for i in tqdm.trange(3):
-        delta = model.delta
+    for i in tqdm.trange(50):
         model.train()
         optimizer.zero_grad()
 
         adjusted_if_matrix = if_matrix.clone()
         adjusted_uf_matrix = uf_matrix.clone()
-        adjusted_if_matrix[:,0] += delta
+        adjusted_if_matrix[:,:] += model.delta
             
-        model.update_recommendations(adjusted_if_matrix.detach().numpy(), adjusted_uf_matrix.detach().numpy(), delta=delta.clone().detach().numpy())
-        # disparity = model.get_cf_disparity(model.recommendations, if_matrix, uf_matrix, model.delta)
-        
-        # print(sum(p.numel() for p in model.parameters() if p.requires_grad))
-        loss, disparity = model.loss_fn(if_matrix, uf_matrix, ld, delta)
+        model.update_recommendations(adjusted_if_matrix.detach().numpy(), adjusted_uf_matrix.detach().numpy(), delta=model.delta.clone().detach().numpy())
+        disparity = model.get_cf_disparity(model.recommendations, adjusted_if_matrix, adjusted_uf_matrix)
+        loss = model.loss_fn(disparity, ld, model.delta)
+
         # print(sum(p.numel() for p in model.parameters() if p.requires_grad))
         loss.backward(retain_graph=True)
 
