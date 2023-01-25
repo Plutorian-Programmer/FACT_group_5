@@ -3,7 +3,6 @@ from utils import get_feature_list, sentiment_data_filtering, get_user_attention
 import numpy as np
 from collections import Counter
 import json
-from group import Group
 
 class Dataset():
     def __init__(self, preprocessing_args):
@@ -209,7 +208,16 @@ class Dataset():
         self.test_data = np.array(user_item_label_list)
         return True
     
-
+    def remove_features(self, index_list, method="both"):
+        """
+        Removes features from both user and item matrices by setting all values to zero.
+        """
+        for feature in index_list:
+            if method != "item":
+                self.user_feature_matrix[:, feature] = 0
+            if method != "user":
+                self.item_feature_matrix[:, feature] = 0
+        return True
 
 def get_user_item_dict(sentiment_data):
     """
