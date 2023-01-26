@@ -40,13 +40,16 @@ class CEF(torch.nn.Module):
         for p in self.basemodel.parameters():
             p.requires_grad = False
 
-        self.exposure = dict()
+
 
         self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape))
 
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
                                                         k=5)
+
+        self.exposure = dict()
+        self.init_exposure = self.update_exposures(init=True)
 
 
     def update_recommendations(self, item_feature_matrix, user_feature_matrix, delta=0, k=5):
@@ -92,7 +95,7 @@ class CEF(torch.nn.Module):
         disparity = disparity / total
         return disparity
 
-    def update_exposures(self):
+    def update_exposures(self, init=False):
         exposure_g0 = 0
         exposure_g1 = 0
         
@@ -105,6 +108,9 @@ class CEF(torch.nn.Module):
         self.exposure["G0"] = exposure_g0
         self.exposure["G1"] = exposure_g1
 
+        if init:
+            return {"G0" : exposure_g0, "G1" : exposure_g1}
+
 
     def evaluate_model(self):
         self.update_exposures()
@@ -113,54 +119,43 @@ class CEF(torch.nn.Module):
 
 
     def loss_fn(self, disparity, ld, delta):
-        loss = disparity * disparity #+ ld * torch.linalg.norm(delta)
+        loss = disparity * disparity + ld * torch.linalg.norm(delta)
         return loss
 
+    def validity(self,delta, feature_id, k=5):
+        m = self.dataset.user_feature_matrix.shape[0]
+        # TODO perturbation of only feature_id
+        delta = delta.detach().numpy()
 
-def train_delta():
-    ld = 1
-    lr = 0.01
-    # Init values
-    model = CEF()
-    if_matrix = torch.Tensor(model.dataset.item_feature_matrix)
-    uf_matrix = torch.Tensor(model.dataset.user_feature_matrix)
-    optimizer = torch.optim.Adam([model.delta],lr=lr*1, betas=(0.9,0.999))
+        adjusted_if_matrix = self.dataset.item_feature_matrix.copy()
+        adjusted_if_matrix[:,feature_id] += delta[:,feature_id]
+        adjusted_uf_matrix = self.dataset.user_feature_matrix.copy()
+        self.update_recommendations(adjusted_if_matrix, adjusted_uf_matrix)
+        self.update_exposures()
 
-    # for i, p in enumerate(model.parameters()):
-    #     if i > 0:
-    #         p.requires_grad = False
+        og_exp0 = self.init_exposure["G0"]
+        og_exp1 = self.init_exposure["G1"]
 
-    for i in tqdm.trange(50):
-        model.train()
-        optimizer.zero_grad()
+        cf_exp0 = self.exposure["G0"]
+        cf_exp1 = self.exposure["G1"]
 
-        adjusted_if_matrix = if_matrix.clone()
-        adjusted_uf_matrix = uf_matrix.clone()
-        adjusted_if_matrix[:,:] += model.delta
-            
-        model.update_recommendations(adjusted_if_matrix.detach().numpy(), adjusted_uf_matrix.detach().numpy(), delta=model.delta.clone().detach().numpy())
-        disparity = model.get_cf_disparity(model.recommendations, adjusted_if_matrix, adjusted_uf_matrix)
-        loss = model.loss_fn(disparity, ld, model.delta)
+        v = (og_exp0 - og_exp1 - cf_exp0 + cf_exp1) / (m * k)
 
-        # print(sum(p.numel() for p in model.parameters() if p.requires_grad))
-        loss.backward(retain_graph=True)
+        # self.item_feature_matrix[:, feature_id] -= delta[:, feature_id]
 
-        print(model.delta.grad.norm())
+        return v
 
-        optimizer.step()
+    def top_k(self, delta, beta=0.1):
+        ES_scores = {}
+        for i in tqdm.trange(delta.shape[1]):
+            prox = torch.norm(delta[:,i])
+            validity = self.validity(delta, i)
+            ES_scores[i] = validity - beta * prox
+        # sort ES_scores list
+        ranked_features = sorted(ES_scores.items(), key = lambda item : ES_scores[item], reverse=True)
+        # Return top k features
+        return ranked_features[:5]
 
-        print(f"epoch {i}")
-        print(f"Disparity: {disparity}")
-        print(f"loss: {loss}")
-
-        model.evaluate_model()
-
-
-
-if __name__ == "__main__":
-    # CEF_model = CEF()
-    # CEF_model.evaluate_model()
-    train_delta()
 
 
 
