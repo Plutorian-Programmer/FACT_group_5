@@ -17,7 +17,7 @@ def arg_parser_preprocessing():
     parser.add_argument("--val_length", dest="val_length", type=int, default=1, 
                         help="the number of val items")
     parser.add_argument("--neg_length", dest="neg_length", type=int, default=100, help="# of negative samples in evaluation")
-    parser.add_argument("--save_path", dest="save_path", type=str, default="models/Dataset_20.pickle", 
+    parser.add_argument("--save_path", dest="save_path", type=str, default="models/Dataset.pickle", 
                         help="The path to save the preprocessed dataset object")
     parser.add_argument("--use_pre", dest="use_pre", type=str, default=False, 
             help="The path to save the preprocessed dataset object")

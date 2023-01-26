@@ -17,26 +17,6 @@ with open(dataset_path, "rb") as f:
 # model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 # model.load_state_dict(torch.load(model_path))
 
-interaction_count = np.zeros(rec_dataset.item_num)
-for user in rec_dataset.user_hist_inter_dict:
-    for item in rec_dataset.user_hist_inter_dict[user]:
-        interaction_count[item] += 1
-
-sorted_items = np.argsort(interaction_count)[::-1]
-split = int(len(sorted_items)*0.2)
-top = list(sorted_items[:split])
-bottom = list(sorted_items[split:])
-print(len(top))
-print(len(bottom))
-
-top_sum = 0
-for item in top:
-    top_sum += interaction_count[item]
-bottom_sum = np.sum(interaction_count) - top_sum
-
-print(top_sum)
-print(bottom_sum)
-print(interaction_count[top[0]])
-print(interaction_count[top[-1]])
-print(interaction_count[bottom[0]])
-print(interaction_count[bottom[-1]])
+G0 = rec_dataset.G0
+G1 = rec_dataset.G1
+print(rec_dataset.test_data)
