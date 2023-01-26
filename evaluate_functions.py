@@ -57,3 +57,6 @@ def eval_model(dataset, k, model, device):
     lt_scores = np.mean(lt_scores)
 
     return ndcg_scores, f1_scores, lt_scores
+
+def compute_ltr(g0, g1):
+    return g1 / (g1+g0)
