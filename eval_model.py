@@ -9,11 +9,11 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 
 device = 'cpu'
-dataset_path = "models\Dataset.pickle"
+dataset_path = "models/Dataset_20.pickle"
 with open(dataset_path, "rb") as f:
     rec_dataset = pickle.load(f)
 
-model_path = "models\model.model"
+model_path = "models/model_20.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 5

@@ -17,11 +17,15 @@ class BaseRecModel(torch.nn.Module):
             torch.nn.Sigmoid()
         )
 
-    def forward(self, user_feature, item_feature):
-        fusion = np.multiply(user_feature, item_feature)
-        fusion = fusion.to(torch.float32)
+    def forward_torch(self, user_feature, item_feature):
+        fusion = torch.multiply(user_feature, item_feature)
         out = self.fc(fusion)
         return out
 
+    def forward(self, user_feature, item_feature):
+        fusion = torch.multiply(user_feature, item_feature) # USED TO BE NP, check base_train
+        fusion = fusion.to(torch.float32)
+        out = self.fc(fusion)
+        return out
 
     

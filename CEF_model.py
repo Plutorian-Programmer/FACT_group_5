@@ -4,6 +4,7 @@ from args import *
 import pickle
 import numpy as np
 from evaluate_functions import compute_ltr
+import tqdm
 
 # We define the following variables:
 # R: the recommendation list
@@ -12,16 +13,21 @@ from evaluate_functions import compute_ltr
 # A: The user-feature matrix
 # B: The item-feature matrix
 # k: The number of items in the recommendation list
+ 
 
-class CEF():
-    dataset = None
-    basemodel = None
-    delta = None
-    recommendations = None
-    device = None
-    exposure = None
+
+
+class CEF(torch.nn.Module):
+    # dataset = None
+    # basemodel = None
+    # recommendations = None
+    # device = None
+    # exposure = None
+    # delta = None
+    
 
     def __init__(self):
+        super(CEF, self).__init__()
         self.device = 'cpu'
         dataset_path="models/Dataset_20.pickle"
         model_path="models/model_20.model"
@@ -31,16 +37,24 @@ class CEF():
         
         self.basemodel = BaseRecModel(self.dataset.feature_num, self.dataset).to(self.device)
         self.basemodel.load_state_dict(torch.load(model_path))
+        for p in self.basemodel.parameters():
+            p.requires_grad = False
 
-        self.exposure = dict()
 
-        self.get_recommendations(self.dataset.item_feature_matrix, 
-                                                        self.dataset.user_feature_matrix, 
-                                                        self.dataset.test_data, 
+
+        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape))
+
+        self.update_recommendations(self.dataset.item_feature_matrix, 
+                                                        self.dataset.user_feature_matrix,
                                                         k=5)
 
-    def get_recommendations(self, item_feature_matrix, user_feature_matrix, test_data, k=5):
+        self.exposure = dict()
+        self.init_exposure = self.update_exposures(init=True)
+
+
+    def update_recommendations(self, item_feature_matrix, user_feature_matrix, delta=0, k=5):
         self.recommendations = {}
+        test_data = self.dataset.test_data
 
         self.basemodel.eval()
         with torch.no_grad():
@@ -59,39 +73,29 @@ class CEF():
                     self.recommendations[user].append(items[i]) # Get item IDs of top ranked items
  
 
-    def get_cf_disparity(self, recommendations):
+    def get_cf_disparity(self, recommendations, if_matrix, uf_matrix):
         disparity = 0
         total = 0
-        c = self.dataset.G0.mag / self.dataset.G1.mag
+        c = len(self.dataset.G0) / len(self.dataset.G1)
         for row in self.dataset.test_data:
             user = row[0]
-            recommendations = recommendations[user]
+            recommendations = self.recommendations[user]
+            self.basemodel.eval()
             for item in recommendations:
-                if item in self.dataset.G0.items:
-                    disparity += self.basemodel(torch.from_numpy(self.dataset.user_feature_matrix[user]), torch.from_numpy(self.dataset.item_feature_matrix[item]))
-                elif item in self.dataset.G1.items:
-                    disparity -= c * self.basemodel(torch.from_numpy(self.dataset.user_feature_matrix[user]), torch.from_numpy(self.dataset.item_feature_matrix[item]))
-
-                total += self.basemodel(torch.from_numpy(self.dataset.user_feature_matrix[user]), torch.from_numpy(self.dataset.item_feature_matrix[item]))
+                # if_matrix[item, 0] += delta[item]
+                if item in self.dataset.G0:
+                    x = self.basemodel(uf_matrix[user,:],if_matrix[item,:])
+                    disparity += x
+                    total += x
+                elif item in self.dataset.G1:
+                    x = c * self.basemodel(uf_matrix[user,:], if_matrix[item,:])
+                    disparity -= x
+                    total += x
 
         disparity = disparity / total
         return disparity
 
-    def update_recommendations_cf(self, rec_dataset, item_feature_matrix, user_feature_matrix, test_data):
-        np.random.seed(42)
-        delta_v = np.random.randn(*item_feature_matrix.shape) / 10
-        delta_u = np.random.randn(*user_feature_matrix.shape) / 10
-        
-        item_feature_matrix = rec_dataset.item_feature_matrix + delta_v
-        user_feature_matrix = rec_dataset.user_feature_matrix + delta_u
-
-        self.recommendations = self.get_recommendations(item_feature_matrix, user_feature_matrix, test_data)
-        # rec_dataset = get_exposures(recs, rec_dataset) #update group exposures in rec_dataset
-        disparity = self.get_cf_disparity(self.recommendations)
-
-        return disparity
-
-    def update_exposures(self):
+    def update_exposures(self, init=False):
         exposure_g0 = 0
         exposure_g1 = 0
         
@@ -104,6 +108,9 @@ class CEF():
         self.exposure["G0"] = exposure_g0
         self.exposure["G1"] = exposure_g1
 
+        if init:
+            return {"G0" : exposure_g0, "G1" : exposure_g1}
+
 
     def evaluate_model(self):
         self.update_exposures()
@@ -111,8 +118,57 @@ class CEF():
         print(f"long tail rate: {ltr}")
 
 
-if __name__ == "__main__":
-    CEF_model = CEF()
-    CEF_model.evaluate_model()
+    def loss_fn(self, disparity, ld, delta):
+        loss = disparity * disparity + ld * torch.linalg.norm(delta)
+        return loss
+
+    def validity(self,delta, feature_id, k=5):
+        m = self.dataset.user_feature_matrix.shape[0]
+        # TODO perturbation of only feature_id
+        delta = delta.detach().numpy()
+
+        adjusted_if_matrix = self.dataset.item_feature_matrix.copy()
+        adjusted_if_matrix[:,feature_id] += delta[:,feature_id]
+        adjusted_uf_matrix = self.dataset.user_feature_matrix.copy()
+        self.update_recommendations(adjusted_if_matrix, adjusted_uf_matrix)
+        self.update_exposures()
+
+        og_exp0 = self.init_exposure["G0"]
+        og_exp1 = self.init_exposure["G1"]
+
+        cf_exp0 = self.exposure["G0"]
+        cf_exp1 = self.exposure["G1"]
+
+        v = (og_exp0 - og_exp1 - cf_exp0 + cf_exp1) / (m * k)
+
+        # self.item_feature_matrix[:, feature_id] -= delta[:, feature_id]
+
+        return v
+
+    def top_k(self, delta, beta=0.1):
+        ES_scores = {}
+        for i in tqdm.trange(delta.shape[1]):
+            prox = torch.norm(delta[:,i])
+            validity = self.validity(delta, i)
+            ES_scores[i] = validity - beta * prox
+        # sort ES_scores list
+        ranked_features = sorted(ES_scores.items(), key = lambda item : ES_scores[item], reverse=True)
+        # Return top k features
+        return ranked_features[:5]
 
 
+
+
+
+    # def update_recommendations_cf(self, delta_v, delta_u):
+    #     np.random.seed(42)
+    #     dataset = self.dataset
+
+    #     item_feature_matrix = dataset.item_feature_matrix + delta_v
+    #     user_feature_matrix = dataset.user_feature_matrix + delta_u
+
+    #     self.recommendations = self.get_recommendations(dataset.item_feature_matrix, dataset.user_feature_matrix, dataset.test_data)
+    #     self.update_exposures()
+    #     disparity = self.get_cf_disparity(self.recommendations)
+
+    #     return disparity
