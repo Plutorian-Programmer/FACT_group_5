@@ -6,29 +6,33 @@ def eval_model(dataset, k, model, device):
     model.eval()
     test_data = dataset.test_data
     user_feature_matrix = dataset.user_feature_matrix
-    item_feature_matrix = dataset.item_feature_matrix 
+    item_feature_matrix = dataset.item_feature_matrix
     G0 = dataset.G0
     G1 = dataset.G1
     ndcg_scores = []
     f1_scores = []
     lt_scores = []
+    user_matrix = []
+    item_matrix = []
+    for row in test_data:
+        user = row[0]
+        items = row[1]
+        
     with torch.no_grad():
+        scores = model(torch.from_numpy(user_feature_matrix).to(device),
+                        torch.from_numpy(item_feature_matrix).to(device)).squeeze()
+        scores = np.array(scores.to('cpu'))
         for row in test_data:
-            user = row[0]
             items = row[1]
             gt_labels = row[2]
-            user_features = np.array([user_feature_matrix[user] for _ in range(len(items))])
-            item_features = np.array([item_feature_matrix[item] for item in items])
-            scores = model(torch.from_numpy(user_features).to(device),
-                                    torch.from_numpy(item_features).to(device)).squeeze()
-            scores = np.array(scores.to('cpu'))
+            user_scores = [scores[item] for item in scores]
             
             #ndcg
-            ndcg = ndcg_score([gt_labels], [scores], k=k)
+            ndcg = ndcg_score([gt_labels], [user_scores], k=k)
             ndcg_scores.append(ndcg)
 
             #f1
-            pred_items = np.argsort(scores)[-k:]
+            pred_items = np.argsort(user_scores)[-k:]
             tp = 0
             fp = 0
             for item in pred_items:

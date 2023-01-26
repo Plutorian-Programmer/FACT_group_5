@@ -97,11 +97,11 @@ def plot_results(results):
     plt.legend()
     plt.show()
 
-# results = run_tests(rec_dataset, model)
+results = run_tests(rec_dataset, model)
 
 # with open("results/ndcg_lt_20.pickle", "rb") as f:
 #     results = pickle.load(f)
-# plot_results(results)
+plot_results(results)
 # print(rec_dataset.feature_num)
 # feature_count_list = []
 # feature_matrix = rec_dataset.user_feature_matrix
@@ -111,4 +111,4 @@ def plot_results(results):
 
 # plt.plot(existence_array)
 # plt.show()
-print(len(ids_to_delete))
+# print(len(ids_to_delete))
