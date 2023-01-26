@@ -42,7 +42,7 @@ class CEF(torch.nn.Module):
 
 
 
-        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape))
+        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape) / 10)
 
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
@@ -125,7 +125,6 @@ class CEF(torch.nn.Module):
     def validity(self,delta, feature_id, k=5):
         m = self.dataset.user_feature_matrix.shape[0]
         # TODO perturbation of only feature_id
-        delta = delta.detach().numpy()
 
         adjusted_if_matrix = self.dataset.item_feature_matrix.copy()
         adjusted_if_matrix[:,feature_id] += delta[:,feature_id]
@@ -146,15 +145,17 @@ class CEF(torch.nn.Module):
         return v
 
     def top_k(self, delta, beta=0.1):
+        delta = delta.detach().numpy()
         ES_scores = {}
-        for i in tqdm.trange(delta.shape[1]):
-            prox = torch.norm(delta[:,i])
+        for i in tqdm.trange(delta.shape[1]): #delta.shape[1]
+            prox = np.linalg.norm(delta[:,i])**2
             validity = self.validity(delta, i)
+            # TODO Normalize proximity ?
             ES_scores[i] = validity - beta * prox
         # sort ES_scores list
-        ranked_features = sorted(ES_scores.items(), key = lambda item : ES_scores[item], reverse=True)
+        ranked_features = [i[0] for i in sorted(ES_scores.items(), key = lambda item : item[1], reverse=True)]
         # Return top k features
-        return ranked_features[:5]
+        return ranked_features#[:5]
 
 
 

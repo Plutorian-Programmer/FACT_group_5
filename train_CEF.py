@@ -6,7 +6,6 @@ def train_delta(model):
     ld = 1
     lr = 0.01
     # Init values
-    # model = CEF()
     if_matrix = torch.Tensor(model.dataset.item_feature_matrix)
     uf_matrix = torch.Tensor(model.dataset.user_feature_matrix)
     optimizer = torch.optim.Adam([model.delta],lr=lr*1, betas=(0.9,0.999))
@@ -15,7 +14,7 @@ def train_delta(model):
     #     if i > 0:
     #         p.requires_grad = False
 
-    for i in tqdm.trange(1):
+    for i in tqdm.trange(100):
         model.train()
         optimizer.zero_grad()
 
@@ -47,6 +46,7 @@ def train_delta(model):
 if __name__ == "__main__":
     model = CEF()
     delta = train_delta(model)
+    torch.save(delta, 'models/delta.pt')
     ids_to_delete = model.top_k(delta)
 
 
