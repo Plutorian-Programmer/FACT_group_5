@@ -14,15 +14,25 @@ def eval_model(dataset, k, model, device):
     lt_scores = []
     user_matrix = []
     item_matrix = []
+    gt_list = []
     for row in test_data:
         user = row[0]
         items = row[1]
+        gt_labels = row[2]
         
+        user_features = [user_feature_matrix[user] for _ in range(len(items))]
+        item_features = [item_feature_matrix[item] for item in items]
+        
+        user_matrix += user_features
+        item_matrix += item_features
+        gt_list.append(gt_labels)
+    user_matrix = np.array(user_matrix)
+    item_matrix = np.array(item_matrix)
     with torch.no_grad():
-        scores = model(torch.from_numpy(user_feature_matrix).to(device),
-                        torch.from_numpy(item_feature_matrix).to(device)).squeeze()
+        scores = model(torch.from_numpy(user_matrix).to(device),
+                        torch.from_numpy(item_matrix).to(device)).squeeze()
         scores = np.array(scores.to('cpu'))
-        for row in test_data:
+        for idx, gt_labels in enumerate(gt_list):
             items = row[1]
             gt_labels = row[2]
             user_scores = [scores[item] for item in scores]
