@@ -20,14 +20,21 @@ model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 5
 
-def run_tests(dataset, model):
+cef_model_path = "models/CEF_model.model"
+cef_model = CEF()
+cef_model.load_state_dict(torch.load(cef_model_path))
+
+with open("models/ids.pickle", "rb") as f:
+    CEF_ids_to_delete = pickle.load(f)
+
+def run_tests(dataset, model, CEF_model, ids_to_delete):
     np.random.seed(42)
     e = 50
     k = 5
     device = "cpu"
-    CEF_model = CEF()
-    delta = train_delta(CEF_model)
-    ids_to_delete = CEF_model.top_k(delta)
+    # CEF_model = CEF()
+    delta = CEF_model.delta
+    # ids_to_delete = CEF_model.top_k(delta)
 
     feature_count = min(dataset.feature_num//e, 1000)
 
@@ -97,7 +104,7 @@ def plot_results(results):
     plt.legend()
     plt.show()
 
-results = run_tests(rec_dataset, model)
+results = run_tests(rec_dataset, model, cef_model, CEF_ids_to_delete)
 
 # with open("results/ndcg_lt_20.pickle", "rb") as f:
 #     results = pickle.load(f)

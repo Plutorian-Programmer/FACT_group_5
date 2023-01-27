@@ -14,7 +14,7 @@ def train_delta(model):
     #     if i > 0:
     #         p.requires_grad = False
 
-    for i in tqdm.trange(100):
+    for i in tqdm.trange(30):
         model.train()
         optimizer.zero_grad()
 
@@ -47,7 +47,11 @@ if __name__ == "__main__":
     model = CEF()
     delta = train_delta(model)
     torch.save(delta, 'models/delta.pt')
+    torch.save(model.state_dict(), 'models/CEF_model.model')
+
     ids_to_delete = model.top_k(delta)
+    with open("models/ids.pickle", "wb") as f:
+        pickle.dump(ids_to_delete, f)
 
 
 
