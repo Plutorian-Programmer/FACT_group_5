@@ -29,8 +29,8 @@ class CEF(torch.nn.Module):
     def __init__(self):
         super(CEF, self).__init__()
         self.device = 'cpu'
-        dataset_path="models/Dataset_20.pickle"
-        model_path="models/model_20.model"
+        dataset_path="models/Dataset_20_test.pickle"
+        model_path="models/model_20_test.model"
 
         with open(dataset_path, "rb") as f:
             self.dataset = pickle.load(f)
@@ -42,7 +42,7 @@ class CEF(torch.nn.Module):
 
 
 
-        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape) / 10)
+        self.delta = torch.nn.Parameter(torch.randn(self.dataset.user_feature_matrix.shape) / 10)
 
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
