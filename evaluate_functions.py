@@ -15,6 +15,7 @@ def eval_model(dataset, k, model, device):
     user_matrix = []
     item_matrix = []
     gt_list = []
+    item_list = []
     for row in test_data:
         user = row[0]
         items = row[1]
@@ -26,17 +27,22 @@ def eval_model(dataset, k, model, device):
         user_matrix += user_features
         item_matrix += item_features
         gt_list.append(gt_labels)
+        item_list.append(items)
+
     user_matrix = np.array(user_matrix)
     item_matrix = np.array(item_matrix)
     with torch.no_grad():
         scores = model(torch.from_numpy(user_matrix).to(device),
                         torch.from_numpy(item_matrix).to(device)).squeeze()
         scores = np.array(scores.to('cpu'))
+        counter = 0
         for idx, gt_labels in enumerate(gt_list):
-            items = row[1]
-            gt_labels = row[2]
-            user_scores = [scores[item] for item in scores]
-            
+            items = item_list[idx]
+            total_items = len(gt_labels)
+            user_scores = scores[counter : counter + total_items]
+            counter += total_items
+            # print(len(user_scores))
+            # print(len(gt_labels))
             #ndcg
             ndcg = ndcg_score([gt_labels], [user_scores], k=k)
             ndcg_scores.append(ndcg)

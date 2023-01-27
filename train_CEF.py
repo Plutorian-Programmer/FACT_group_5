@@ -15,7 +15,7 @@ def train_delta(model):
     #     if i > 0:
     #         p.requires_grad = False
 
-    for i in tqdm.trange(1):
+    for i in tqdm.trange(10):
         model.train()
         optimizer.zero_grad()
 

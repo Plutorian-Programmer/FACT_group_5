@@ -154,7 +154,7 @@ class CEF(torch.nn.Module):
         # sort ES_scores list
         ranked_features = sorted(ES_scores.items(), key = lambda item : ES_scores[item], reverse=True)
         # Return top k features
-        return ranked_features[:5]
+        return ranked_features
 
 
 
