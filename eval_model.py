@@ -11,11 +11,11 @@ from CEF_model import *
 from train_CEF import *
 import copy
 device = 'cpu'
-dataset_path = "models/Dataset.pickle"
+dataset_path = "models/Dataset_20_test.pickle"
 with open(dataset_path, "rb") as f:
     rec_dataset = pickle.load(f)
 
-model_path = "models/model.model"
+model_path = "models/model_20_test.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 5
@@ -25,8 +25,9 @@ def run_tests(dataset, model):
     e = 50
     k = 5
     device = "cpu"
-    # CEF_model = CEF()
-    # delta = train_delta(CEF_model)
+    CEF_model = CEF()
+    delta = train_delta(CEF_model)
+    ids_to_delete = CEF_model.top_k(delta)
 
     feature_count = min(dataset.feature_num//e, 1000)
 
@@ -96,11 +97,11 @@ def plot_results(results):
     plt.legend()
     plt.show()
 
-# results = run_tests(rec_dataset, model)
+results = run_tests(rec_dataset, model)
 
 # with open("results/ndcg_lt_20.pickle", "rb") as f:
 #     results = pickle.load(f)
-# plot_results(results)
+plot_results(results)
 # print(rec_dataset.feature_num)
 # feature_count_list = []
 # feature_matrix = rec_dataset.user_feature_matrix
@@ -110,4 +111,4 @@ def plot_results(results):
 
 # plt.plot(existence_array)
 # plt.show()
-print(len(ids_to_delete))
+# print(len(ids_to_delete))

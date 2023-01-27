@@ -20,7 +20,7 @@ def train_delta(model):
 
         adjusted_if_matrix = if_matrix.clone()
         adjusted_uf_matrix = uf_matrix.clone()
-        adjusted_uf_matrix[:,:] += model.delta
+        adjusted_if_matrix[:,:] += model.delta
             
         model.update_recommendations(adjusted_if_matrix.detach().numpy(), adjusted_uf_matrix.detach().numpy(), delta=model.delta.clone().detach().numpy())
         disparity = model.get_cf_disparity(model.recommendations, adjusted_if_matrix, adjusted_uf_matrix)

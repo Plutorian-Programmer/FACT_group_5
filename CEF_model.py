@@ -42,7 +42,7 @@ class CEF(torch.nn.Module):
 
 
 
-        self.delta = torch.nn.Parameter(torch.randn(self.dataset.user_feature_matrix.shape) / 10)
+        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape) / 10)
 
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
