@@ -42,7 +42,7 @@ class CEF(torch.nn.Module):
 
 
 
-        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape))
+        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape)/10)
 
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
@@ -154,7 +154,7 @@ class CEF(torch.nn.Module):
         # sort ES_scores list
         ranked_features = sorted(ES_scores.items(), key = lambda item : ES_scores[item], reverse=True)
         # Return top k features
-        return ranked_features[:5]
+        return ranked_features
 
 
 
