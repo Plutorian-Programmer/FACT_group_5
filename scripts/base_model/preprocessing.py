@@ -217,32 +217,6 @@ class Dataset():
                 self.item_feature_matrix[:, feature] = 0
         return True
 
-def get_user_item_dict(sentiment_data):
-    """
-    build user & item dictionary
-    :param sentiment_data: [user, item, [feature1, opinion1, sentiment1], [feature2, opinion2, sentiment2] ...]
-    :return: user dictionary {u1:[i, i, i...], u2:[i, i, i...]}, similarly, item dictionary
-    """
-    user_dict = {}
-    item_dict = {}
-    for row in sentiment_data:
-        user = row[0]
-        item = row[1]
-        if user not in user_dict:
-            user_dict[user] = [item]
-        else:
-            user_dict[user].append(item)
-        if item not in item_dict:
-            item_dict[item] = [user]
-        else:
-            item_dict[item].append(user)
-    return user_dict, item_dict
-
-
 def preprocessing(preprocessing_args):
     rec_dataset = Dataset(preprocessing_args)
     return rec_dataset
-
-# if __name__ == "__main__":
-#     preprocessing_args = arg_parser_preprocessing()
-#     rec_dataset = preprocessing(preprocessing_args)
