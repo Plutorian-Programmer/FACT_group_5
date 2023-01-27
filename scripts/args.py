@@ -21,7 +21,7 @@ def arg_parser_preprocessing():
                         help="The path to save the preprocessed dataset object")
     parser.add_argument("--use_pre", dest="use_pre", type=str, default=False, 
             help="The path to save the preprocessed dataset object")
-    return parser.parse_args()
+    return parser.parse_known_args()
 
 
 

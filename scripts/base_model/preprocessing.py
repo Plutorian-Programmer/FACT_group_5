@@ -1,7 +1,5 @@
-from args import arg_parser_preprocessing
-from utils import get_feature_list, sentiment_data_filtering, get_user_attention_matrix, get_item_quality_matrix, sample_training_pairs, split_groups
+from ..utils import *
 import numpy as np
-from collections import Counter
 import json
 
 class Dataset():
@@ -61,7 +59,7 @@ class Dataset():
                         sentiment = fos.split('|')[2]
                         sentiment_data[-1].append([feature, opinion, sentiment])
                 line = f.readline().strip()
-        sentiment_data = np.array(sentiment_data)
+        sentiment_data = np.array(sentiment_data, dtype="object")
         # sentiment_data = sentiment_data_filtering(sentiment_data, 15, self.args.user_thresh)
         user_dict, item_dict = get_user_item_dict(sentiment_data)
         user_item_date_dict = {}
@@ -190,7 +188,7 @@ class Dataset():
             for pair in training_pairs:
                 training_data.append(pair)
         print('# training samples :', len(training_data))
-        self.training_data = np.array(training_data)
+        self.training_data = np.array(training_data, dtype="object")
         return True
     
     def sample_test(self):
@@ -205,7 +203,7 @@ class Dataset():
             user_item_label_list[-1][1] = np.concatenate((user_item_label_list[-1][1], negative_items), axis=0)
             user_item_label_list[-1][2] = np.concatenate((user_item_label_list[-1][2], np.zeros(self.args.neg_length)), axis=0)
         print('# test samples :', len(user_item_label_list))
-        self.test_data = np.array(user_item_label_list)
+        self.test_data = np.array(user_item_label_list, dtype="object")
         return True
     
     def remove_features(self, index_list, method="both"):
@@ -245,6 +243,6 @@ def preprocessing(preprocessing_args):
     rec_dataset = Dataset(preprocessing_args)
     return rec_dataset
 
-if __name__ == "__main__":
-    preprocessing_args = arg_parser_preprocessing()
-    rec_dataset = preprocessing(preprocessing_args)
+# if __name__ == "__main__":
+#     preprocessing_args = arg_parser_preprocessing()
+#     rec_dataset = preprocessing(preprocessing_args)
