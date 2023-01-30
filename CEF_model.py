@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 from evaluate_functions import compute_ltr
 import tqdm
+from collections import defaultdict
 
 # We define the following variables:
 # R: the recommendation list
@@ -26,8 +27,10 @@ class CEF(torch.nn.Module):
     # delta = None
     
 
-    def __init__(self):
+    def __init__(self, train_args):
         super(CEF, self).__init__()
+        self.args = train_args
+
         self.device = 'cpu'
         dataset_path="models/Dataset_20_test.pickle"
         model_path="models/model_20_test.model"
@@ -42,8 +45,10 @@ class CEF(torch.nn.Module):
 
 
 
-        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape) / 10)
-
+        self.delta = torch.zeros(self.dataset.item_feature_matrix.shape) #torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape) / 10000)
+        # self.d = torch.nn.Parameter(torch.zeros(self.dataset.item_feature_matrix.shape[0]))
+        self.deltadict = defaultdict(lambda: torch.nn.parameter.Parameter(torch.randn(self.dataset.item_num)/10000))
+        self.params = None
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
                                                         k=5)
@@ -119,7 +124,10 @@ class CEF(torch.nn.Module):
 
 
     def loss_fn(self, disparity, ld, delta):
-        loss = disparity * disparity + ld * torch.linalg.norm(delta)
+        # norm_delta = torch.linalg.norm(delta) / self.dataset.feature_num
+        delta_norm = torch.linalg.norm(delta) # / self.dataset.feature_num
+        loss = disparity * disparity + self.args.ld * delta_norm
+        print(f"Delta norm: {delta_norm}")
         return loss
 
     def validity(self,delta, feature_id, k=5):
@@ -147,29 +155,13 @@ class CEF(torch.nn.Module):
     def top_k(self, delta, beta=0.1):
         delta = delta.detach().numpy()
         ES_scores = {}
-        for i in tqdm.trange(delta.shape[1]): #delta.shape[1]
+        for i in tqdm.trange(self.dataset.feature_num): #delta.shape[1]
             prox = np.linalg.norm(delta[:,i])**2
             validity = self.validity(delta, i)
-            # TODO Normalize proximity ?
             ES_scores[i] = validity - beta * prox
         # sort ES_scores list
         ranked_features = [i[0] for i in sorted(ES_scores.items(), key = lambda item : item[1], reverse=True)]
-        # Return top k features
         return ranked_features#[:5]
 
 
 
-
-
-    # def update_recommendations_cf(self, delta_v, delta_u):
-    #     np.random.seed(42)
-    #     dataset = self.dataset
-
-    #     item_feature_matrix = dataset.item_feature_matrix + delta_v
-    #     user_feature_matrix = dataset.user_feature_matrix + delta_u
-
-    #     self.recommendations = self.get_recommendations(dataset.item_feature_matrix, dataset.user_feature_matrix, dataset.test_data)
-    #     self.update_exposures()
-    #     disparity = self.get_cf_disparity(self.recommendations)
-
-    #     return disparity

@@ -38,3 +38,12 @@ def arg_parser_training():
     parser.add_argument("--epochs", dest="epochs", type=int, default=10)
     return parser.parse_args()
 
+def arg_parser_CEF():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--device", dest = "device", type=str, default='cpu')
+    parser.add_argument("--lr", dest="lr", type=float, default=0.01)
+    parser.add_argument("--epochs", dest="epochs", type=int, default=3)
+    parser.add_argument("--lambda", dest="ld", type=float, default=1.0)
+    parser.add_argument("--beta", dest="beta", type=float, default=0.1)
+    return parser.parse_args()
+    

@@ -11,6 +11,7 @@ from CEF_model import *
 from train_CEF import *
 import copy
 device = 'cpu'
+
 dataset_path = "models/Dataset_20_test.pickle"
 with open(dataset_path, "rb") as f:
     rec_dataset = pickle.load(f)
@@ -20,11 +21,13 @@ model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 5
 
-cef_model_path = "models/CEF_model.model"
-cef_model = CEF()
-cef_model.load_state_dict(torch.load(cef_model_path))
 
-with open("models/ids.pickle", "rb") as f:
+cef_model_path = "models/CEF_model_temp.model"
+train_args = arg_parser_CEF()
+cef_model = CEF(train_args)
+cef_model.load_state_dict(torch.load(cef_model_path), strict=False)
+
+with open(f"models/ids_temp.pickle", "rb") as f:
     CEF_ids_to_delete = pickle.load(f)
 
 def run_tests(dataset, model, CEF_model, ids_to_delete):
