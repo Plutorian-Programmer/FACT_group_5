@@ -26,17 +26,12 @@ class CEF(torch.nn.Module):
     # delta = None
     
 
-    def __init__(self):
+    def __init__(self, CEF_args, dataset, base_model):
         super(CEF, self).__init__()
-        self.device = 'cpu'
-        dataset_path="models/Dataset_20_test.pickle"
-        model_path="models/model_20_test.model"
-
-        with open(dataset_path, "rb") as f:
-            self.dataset = pickle.load(f)
-        
-        self.basemodel = BaseRecModel(self.dataset.feature_num, self.dataset).to(self.device)
-        self.basemodel.load_state_dict(torch.load(model_path))
+        self.device = CEF_args.device
+        self.dataset= dataset
+        self.basemodel= base_model
+        self.k = CEF_args.rec_k
         for p in self.basemodel.parameters():
             p.requires_grad = False
 
@@ -46,7 +41,7 @@ class CEF(torch.nn.Module):
 
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
-                                                        k=5)
+                                                        k=self.k)
 
         self.exposure = dict()
         self.init_exposure = self.update_exposures(init=True)
@@ -145,10 +140,11 @@ class CEF(torch.nn.Module):
 
         return v
 
-    def top_k(self, delta, beta=0.1):
+    def top_k(self, beta=0.1):
+        delta = self.delta.detach().numpy()
         ES_scores = {}
-        for i in tqdm.trange(delta.shape[1]):
-            prox = torch.norm(delta[:,i])
+        for i in tqdm.trange(self.delta.shape[1]):
+            prox = torch.norm(self.delta[:,i])
             validity = self.validity(delta, i)
             ES_scores[i] = validity - beta * prox
         # sort ES_scores list

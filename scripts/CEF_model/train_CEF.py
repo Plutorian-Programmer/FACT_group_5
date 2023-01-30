@@ -2,11 +2,10 @@ import numpy as np
 import torch
 from CEF_model import *
 
-def train_delta(model):
-    ld = 1
-    lr = 0.01
+def train_delta(CEF_args, model):
     # Init values
-    # model = CEF()
+    lr = CEF_args.lr
+    ld = CEF_args.ld
     if_matrix = torch.Tensor(model.dataset.item_feature_matrix)
     uf_matrix = torch.Tensor(model.dataset.user_feature_matrix)
     optimizer = torch.optim.Adam([model.delta],lr=lr*1, betas=(0.9,0.999))
@@ -15,7 +14,7 @@ def train_delta(model):
         if i > 0:
             p.requires_grad = False
 
-    for i in tqdm.trange(1):
+    for i in tqdm.trange(CEF_args.epochs):
         model.train()
         optimizer.zero_grad()
 
@@ -39,13 +38,6 @@ def train_delta(model):
         print(f"loss: {loss}")
 
         model.evaluate_model()
-
-    return model.delta
-
-
-
-if __name__ == "__main__":
-    model = CEF()
-    delta = train_delta(model)
-    ids_to_delete = model.top_k(delta)
-    
+    output_path = CEF_args.model_path
+    torch.save(model.state_dict(), output_path)
+    return model
