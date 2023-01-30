@@ -31,7 +31,7 @@ class CEF(torch.nn.Module):
         super(CEF, self).__init__()
         self.args = train_args
 
-        self.device = 'cpu'
+        self.device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0")
         dataset_path="models/Dataset_20_test.pickle"
         model_path="models/model_20_test.model"
 
@@ -39,7 +39,7 @@ class CEF(torch.nn.Module):
             self.dataset = pickle.load(f)
         
         self.basemodel = BaseRecModel(self.dataset.feature_num, self.dataset).to(self.device)
-        self.basemodel.load_state_dict(torch.load(model_path))
+        self.basemodel.load_state_dict(torch.load(model_path)).to(self.device)
         for p in self.basemodel.parameters():
             p.requires_grad = False
 
@@ -89,11 +89,11 @@ class CEF(torch.nn.Module):
             for item in recommendations:
                 # if_matrix[item, 0] += delta[item]
                 if item in self.dataset.G0:
-                    x = self.basemodel(uf_matrix[user,:],if_matrix[item,:])
+                    x = self.basemodel(uf_matrix[user,:].to(self.device),if_matrix[item,:].to(self.device))
                     disparity += x
                     total += x
                 elif item in self.dataset.G1:
-                    x = c * self.basemodel(uf_matrix[user,:], if_matrix[item,:])
+                    x = c * self.basemodel(uf_matrix[user,:].to(self.device), if_matrix[item,:].to(self.device))
                     disparity -= x
                     total += x
 

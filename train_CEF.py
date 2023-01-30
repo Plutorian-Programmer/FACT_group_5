@@ -6,6 +6,10 @@ def train_delta(model):
     ld = model.args.ld
     lr = model.args.lr
     # Init values
+
+    device = model.device
+    model = model.to(device)
+
     if_matrix = torch.Tensor(model.dataset.item_feature_matrix)
     uf_matrix = torch.Tensor(model.dataset.user_feature_matrix)
 
@@ -14,20 +18,20 @@ def train_delta(model):
     #         p.requires_grad = False
     for feature in tqdm.trange(10): #model.dataset.feature_num
         print(f"feature {feature}")
-        model.params = model.deltadict[feature]
+        model.params = model.deltadict[feature].to(device)
         optimizer = torch.optim.Adam([model.params],lr=lr*1, betas=(0.9,0.999))
         for i in tqdm.trange(model.args.epochs):
             print(f"epoch {i}")
             model.train()
             optimizer.zero_grad()
 
-            adjusted_if_matrix = if_matrix.clone()
-            adjusted_uf_matrix = uf_matrix.clone()
+            adjusted_if_matrix = if_matrix.clone().to(device)
+            adjusted_uf_matrix = uf_matrix.clone().to(device)
             adjusted_if_matrix[:,feature] += model.params #elta[:,feature]
                 
             model.update_recommendations(adjusted_if_matrix.detach().numpy(), adjusted_uf_matrix.detach().numpy(), delta=model.delta.clone().detach().numpy())
             disparity = model.get_cf_disparity(model.recommendations, adjusted_if_matrix, adjusted_uf_matrix)
-            loss = model.loss_fn(disparity, ld, model.params)
+            loss = model.loss_fn(disparity, ld, model.params).to(device)
 
             # print(sum(p.numel() for p in model.parameters() if p.requires_grad))
             loss.backward(retain_graph=True)
