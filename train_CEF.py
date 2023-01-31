@@ -14,7 +14,7 @@ def train_delta(model):
     #     if i > 0:
     #         p.requires_grad = False
 
-    for i in tqdm.trange(1):
+    for i in tqdm.trange(500):
         model.train()
         optimizer.zero_grad()
 
@@ -40,21 +40,21 @@ def train_delta(model):
 
         model.evaluate_model()
 
-    output_path = "models/CEF_model.model"
-    torch.save(model.state_dict(), output_path)
-    return model.delta_i, model.delta_u
+    # output_path = "models/CEF_model_full.model"
+    # torch.save(model.state_dict(), output_path)
+    return model.delta_i, model.delta_u, model
 
 
 
 if __name__ == "__main__":
     model = CEF()
-    delta_i, delta_u = train_delta(model)
-    torch.save(delta_i, 'models/CEFout/delta_i_500_features.pt')
-    torch.save(delta_u, 'models/CEFout/delta_u_500_features.pt')
-    torch.save(model.state_dict(), 'models/CEF_model_500_features.model')
+    delta_i, delta_u, model = train_delta(model)
+    torch.save(delta_i, 'models/CEFout/delta_i_500features_full.pt')
+    torch.save(delta_u, 'models/CEFout/delta_u_500features_full.pt')
+    torch.save(model.state_dict(), 'models/CEF_model_500features_full.model')
 
     ids_to_delete = model.top_k()
-    with open("models/CEFout/ids_500_features.pickle", "wb") as f:
+    with open("models/CEFout/ids_500features.pickle", "wb") as f:
         pickle.dump(ids_to_delete, f)
 
 
