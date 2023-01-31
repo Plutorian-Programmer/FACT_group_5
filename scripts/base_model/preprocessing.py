@@ -60,7 +60,8 @@ class Dataset():
                         sentiment_data[-1].append([feature, opinion, sentiment])
                 line = f.readline().strip()
         sentiment_data = np.array(sentiment_data, dtype="object")
-        # sentiment_data = sentiment_data_filtering(sentiment_data, 15, self.args.user_thresh)
+        if self.args.extra_filter:
+            sentiment_data = sentiment_data_filtering(sentiment_data, self.args.item_thresh, self.args.user_thresh)
         user_dict, item_dict = get_user_item_dict(sentiment_data)
         user_item_date_dict = {}
 

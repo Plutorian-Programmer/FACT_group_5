@@ -34,7 +34,7 @@ class CEF(torch.nn.Module):
 
 
 
-        self.delta = torch.nn.Parameter(torch.randn(self.dataset.user_feature_matrix.shape)/10)
+        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape)/100000)
 
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
@@ -111,7 +111,7 @@ class CEF(torch.nn.Module):
 
 
     def loss_fn(self, disparity, ld, delta):
-        loss = disparity * disparity + ld * torch.linalg.norm(delta)
+        loss = disparity * disparity + ld * torch.linalg.norm(delta) / self.dataset.feature_num
         return loss
 
     def validity(self,delta, feature_id, k=5):
