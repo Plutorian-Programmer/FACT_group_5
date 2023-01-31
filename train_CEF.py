@@ -39,7 +39,7 @@ def train_delta(model):
 
         model.evaluate_model()
 
-    output_path = "CEF_model.model"
+    output_path = "models/CEF_model.model"
     torch.save(model.state_dict(), output_path)
     return model.delta
 

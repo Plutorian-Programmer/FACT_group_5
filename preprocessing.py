@@ -182,7 +182,7 @@ class Dataset():
         feature_matrix = np.where(feature_matrix != 0, 1, 0)
         existence_array = np.sum(feature_matrix, axis=0)
         existence_array = np.argsort(existence_array)[::-1]
-        pop_indexes = existence_array[:self.feature_count]
+        pop_indexes = existence_array[:self.max_features]
         new_item_feature_matrix = np.array([self.item_feature_matrix[:, i] for i in pop_indexes]).T
         new_user_feature_matrix = np.array([self.user_feature_matrix[:, i] for i in pop_indexes]).T
         new_features = [self.features[i] for i in pop_indexes]
