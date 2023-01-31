@@ -38,7 +38,7 @@ class Dataset():
 
         self.pre_processing()
         self.get_user_item_feature_matrix() # Get the attention matrices
-        self.filter_features()
+        # self.filter_features()
         self.sample_training()  # sample training data, for traning BPR loss
         self.sample_test()  # sample test data
 
