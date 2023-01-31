@@ -106,7 +106,8 @@ class CEF(torch.nn.Module):
 
     def evaluate_model(self):
         self.update_exposures()
-        _, _, ltr = eval_model(self.dataset, 5, self.basemodel, self.device)
+        #_, _, ltr = eval_model(self.dataset, 5, self.basemodel, self.device)
+        ltr = self.exposure["G1"] / (self.exposure["G0"] + self.exposure["G1"])
         print(f"long tail rate: {ltr}")
 
 
@@ -121,7 +122,7 @@ class CEF(torch.nn.Module):
 
         adjusted_if_matrix = self.dataset.item_feature_matrix.copy()
         adjusted_uf_matrix = self.dataset.user_feature_matrix.copy()
-        adjusted_uf_matrix[:,feature_id] += delta[:,feature_id]
+        adjusted_if_matrix[:,feature_id] += delta[:,feature_id]
         self.update_recommendations(adjusted_if_matrix, adjusted_uf_matrix)
         self.update_exposures()
 
@@ -133,21 +134,21 @@ class CEF(torch.nn.Module):
 
         v = (og_exp0 - og_exp1 - cf_exp0 + cf_exp1) / (m * k)
 
-        # self.item_feature_matrix[:, feature_id] -= delta[:, feature_id]
-
         return v
 
     def top_k(self, beta=0.1):
         delta = self.delta
+        delta = delta.detach()
         ES_scores = {}
-        for i in tqdm.trange(self.delta.shape[1]):
-            prox = torch.norm(self.delta[:,i])
+        for i in tqdm.trange(delta.shape[1]):
+            prox = torch.norm(delta[:,i])
             validity = self.validity(delta, i)
             ES_scores[i] = validity - beta * prox
         # sort ES_scores list
-        ranked_features = sorted(ES_scores.items(), key = lambda item : ES_scores[item], reverse=True)
+        ranked_features = sorted(ES_scores.items(), key = lambda item : item[1], reverse=True)
+        ranked_feature_ids = [i[0] for i in ranked_features]
         # Return top k features
-        return ranked_features
+        return ranked_feature_ids
 
 
 

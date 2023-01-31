@@ -11,12 +11,13 @@ import matplotlib.pyplot as plt
 # from train_CEF import *
 import copy
 
-def get_results(dataset, result_args, base_model, CEF_Model):
+def get_results(dataset, result_args, base_model, CEF_Model, CEF_delete_list=None):
     np.random.seed(42)
     e = result_args.remove_size
     k = result_args.rec_k
     device = result_args.device
-    CEF_delelete_list = CEF_Model.top_k(result_args.beta)
+    if CEF_delete_list == None:
+        CEF_delete_list = CEF_Model.top_k(result_args.beta)
 
     feature_count = min(dataset.feature_num//e, result_args.epochs)
 
@@ -62,8 +63,8 @@ def get_results(dataset, result_args, base_model, CEF_Model):
         results["pop_user"]["lt"].append(lt_user)
 
         #CEF
-        removal_list = CEF_delelete_list[:e]
-        ids_to_delete = CEF_delelete_list[e:]
+        removal_list = CEF_delete_list[:e]
+        CEF_delete_list = CEF_delete_list[e:]
         CEF_dataset.remove_features(removal_list)
         ndcg_CEF, _ , lt_CEF = eval_model(CEF_dataset, k, base_model, device)
         results["CEF"]["ndcg"].append(ndcg_CEF)
