@@ -39,7 +39,7 @@ class CEF(torch.nn.Module):
             self.dataset = pickle.load(f)
         
         self.basemodel = BaseRecModel(self.dataset.feature_num, self.dataset).to(self.device)
-        self.basemodel.load_state_dict(torch.load(model_path)).to(self.device)
+        self.basemodel.load_state_dict(torch.load(model_path))
         for p in self.basemodel.parameters():
             p.requires_grad = False
 
