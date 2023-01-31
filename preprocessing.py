@@ -8,7 +8,7 @@ class Dataset():
     def __init__(self, preprocessing_args):
         super().__init__()
         self.args = preprocessing_args
-        self.feature_count = 100
+        self.max_features = 100
 
         self.sentiment_data = None
         self.user_name_dict = {}  # rename users to integer names
