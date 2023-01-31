@@ -28,9 +28,9 @@ class CEF(torch.nn.Module):
 
     def __init__(self):
         super(CEF, self).__init__()
-        self.device = 'cpu'
-        dataset_path="models/Dataset_20.pickle"
-        model_path="models/model_20.model"
+        self.device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0")
+        dataset_path="models/Dataset_500_features.pickle"
+        model_path="models/model_500_features.model"
 
         with open(dataset_path, "rb") as f:
             self.dataset = pickle.load(f)
@@ -42,7 +42,9 @@ class CEF(torch.nn.Module):
 
 
 
-        self.delta = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape) / 10000)
+        self.delta_i = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape) / 10000)
+        self.delta_u = torch.nn.Parameter(torch.randn(self.dataset.user_feature_matrix.shape) / 10000)
+        
 
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
@@ -52,7 +54,7 @@ class CEF(torch.nn.Module):
         self.init_exposure = self.update_exposures(init=True)
 
 
-    def update_recommendations(self, item_feature_matrix, user_feature_matrix, delta=0, k=5):
+    def update_recommendations(self, item_feature_matrix, user_feature_matrix, k=5):
         self.recommendations = {}
         test_data = self.dataset.test_data
 
@@ -118,17 +120,21 @@ class CEF(torch.nn.Module):
         print(f"long tail rate: {ltr}")
 
 
-    def loss_fn(self, disparity, ld, delta):
+    def loss_fn(self, disparity, ld):
+        delta = torch.cat((self.delta_i, self.delta_u), dim=0)
         loss = disparity * disparity + ld * torch.linalg.norm(delta) / self.dataset.feature_num
         return loss
 
-    def validity(self,delta, feature_id, k=5):
+    def validity(self, feature_id, k=5):
         m = self.dataset.user_feature_matrix.shape[0]
         # TODO perturbation of only feature_id
+        delta_i = self.delta_i.detach().numpy()
+        delta_u = self.delta_u.detach().numpy()
 
         adjusted_if_matrix = self.dataset.item_feature_matrix.copy()
-        adjusted_if_matrix[:,feature_id] += delta[:,feature_id]
+        adjusted_if_matrix[:,feature_id] += delta_i[:,feature_id]
         adjusted_uf_matrix = self.dataset.user_feature_matrix.copy()
+        adjusted_uf_matrix[:,feature_id] += delta_u[:,feature_id]
         self.update_recommendations(adjusted_if_matrix, adjusted_uf_matrix)
         self.update_exposures()
 
@@ -140,17 +146,15 @@ class CEF(torch.nn.Module):
 
         v = (og_exp0 - og_exp1 - cf_exp0 + cf_exp1) / (m * k)
 
-        # self.item_feature_matrix[:, feature_id] -= delta[:, feature_id]
-
         return v
 
-    def top_k(self, delta, beta=0.1):
-        delta = delta.detach().numpy()
+    def top_k(self, beta=0.1):
+        delta = torch.cat((self.delta_u.detach(), self.delta_i.detach()), dim=0).detach().numpy()
         ES_scores = {}
         for i in tqdm.trange(delta.shape[1]): #delta.shape[1]
             prox = np.linalg.norm(delta[:,i])**2
-            validity = self.validity(delta, i)
-            # TODO Normalize proximity ?
+            validity = self.validity(i)
+
             ES_scores[i] = validity - beta * prox
         # sort ES_scores list
         ranked_features = [i[0] for i in sorted(ES_scores.items(), key = lambda item : item[1], reverse=True)]

@@ -8,28 +8,29 @@ def train_delta(model):
     # Init values
     if_matrix = torch.Tensor(model.dataset.item_feature_matrix)
     uf_matrix = torch.Tensor(model.dataset.user_feature_matrix)
-    optimizer = torch.optim.Adam([model.delta],lr=lr, betas=(0.9,0.999))
+    optimizer = torch.optim.Adam([model.delta_i, model.delta_u],lr=lr, betas=(0.9,0.999))
 
     # for i, p in enumerate(model.parameters()):
     #     if i > 0:
     #         p.requires_grad = False
 
-    for i in tqdm.trange(10):
+    for i in tqdm.trange(1):
         model.train()
         optimizer.zero_grad()
 
         adjusted_if_matrix = if_matrix.clone()
         adjusted_uf_matrix = uf_matrix.clone()
-        adjusted_if_matrix[:,:] += model.delta
+        adjusted_if_matrix[:,:] += model.delta_i
+        adjusted_uf_matrix[:,:] += model.delta_u
             
-        model.update_recommendations(adjusted_if_matrix.detach().numpy(), adjusted_uf_matrix.detach().numpy(), delta=model.delta.clone().detach().numpy())
+        model.update_recommendations(adjusted_if_matrix.detach().numpy(), adjusted_uf_matrix.detach().numpy())
         disparity = model.get_cf_disparity(model.recommendations, adjusted_if_matrix, adjusted_uf_matrix)
-        loss = model.loss_fn(disparity, ld, model.delta)
+        loss = model.loss_fn(disparity, ld)
 
-        # print(sum(p.numel() for p in model.parameters() if p.requires_grad))
+        print(sum(p.numel() for p in model.parameters() if p.requires_grad))
         loss.backward(retain_graph=True)
 
-        print(f"delta size: {model.delta.grad.norm()}")
+        # print(f"delta grad size: {model.delta_i.grad.norm()}")
 
         optimizer.step()
 
@@ -41,18 +42,19 @@ def train_delta(model):
 
     output_path = "models/CEF_model.model"
     torch.save(model.state_dict(), output_path)
-    return model.delta
+    return model.delta_i, model.delta_u
 
 
 
 if __name__ == "__main__":
     model = CEF()
-    delta = train_delta(model)
-    torch.save(delta, 'models/delta.pt')
-    torch.save(model.state_dict(), 'models/CEF_model_300.model')
+    delta_i, delta_u = train_delta(model)
+    torch.save(delta_i, 'models/CEFout/delta_i_500_features.pt')
+    torch.save(delta_u, 'models/CEFout/delta_u_500_features.pt')
+    torch.save(model.state_dict(), 'models/CEF_model_500_features.model')
 
-    ids_to_delete = model.top_k(delta)
-    with open("models/ids.pickle_300", "wb") as f:
+    ids_to_delete = model.top_k()
+    with open("models/CEFout/ids_500_features.pickle", "wb") as f:
         pickle.dump(ids_to_delete, f)
 
 
