@@ -5,6 +5,7 @@ import pickle
 import numpy as np
 from evaluate_functions import compute_ltr
 import tqdm
+from collections import defaultdict
 
 # We define the following variables:
 # R: the recommendation list
@@ -26,7 +27,7 @@ class CEF(torch.nn.Module):
     # delta = None
     
 
-    def __init__(self):
+    def __init__(self, featurewise=False):
         super(CEF, self).__init__()
         self.device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0")
         dataset_path="models/Dataset_500_features.pickle"
@@ -39,12 +40,21 @@ class CEF(torch.nn.Module):
         self.basemodel.load_state_dict(torch.load(model_path))
         for p in self.basemodel.parameters():
             p.requires_grad = False
-
-
-
-        self.delta_i = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape) / 10000)
-        self.delta_u = torch.nn.Parameter(torch.randn(self.dataset.user_feature_matrix.shape) / 10000)
+    
         
+        
+        if featurewise:
+            self.delta_i = torch.zeros(self.dataset.item_feature_matrix.shape)
+            self.delta_u = torch.zeros(self.dataset.user_feature_matrix.shape)
+            self.deltadict_i = defaultdict(lambda: torch.nn.parameter.Parameter(torch.randn(self.dataset.item_num)/100))
+            self.deltadict_u = defaultdict(lambda: torch.nn.parameter.Parameter(torch.randn(self.dataset.user_num)/100))
+            self.params_i = None
+            self.params_u = None
+        else:
+            self.delta_i = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape) / 10000).to(self.device)
+            self.delta_u = torch.nn.Parameter(torch.randn(self.dataset.user_feature_matrix.shape) / 10000).to(self.device)
+            
+
 
         self.update_recommendations(self.dataset.item_feature_matrix, 
                                                         self.dataset.user_feature_matrix,
