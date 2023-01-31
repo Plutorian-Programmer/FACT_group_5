@@ -51,8 +51,8 @@ class CEF(torch.nn.Module):
             self.params_i = None
             self.params_u = None
         else:
-            self.delta_i = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape) / 10000).to(self.device)
-            self.delta_u = torch.nn.Parameter(torch.randn(self.dataset.user_feature_matrix.shape) / 10000).to(self.device)
+            self.delta_i = torch.nn.Parameter(torch.randn(self.dataset.item_feature_matrix.shape) / 1000).to(self.device)
+            self.delta_u = torch.nn.Parameter(torch.randn(self.dataset.user_feature_matrix.shape) / 1000).to(self.device)
             
 
 

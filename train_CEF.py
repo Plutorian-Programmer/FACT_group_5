@@ -54,7 +54,7 @@ if __name__ == "__main__":
     torch.save(model.state_dict(), 'models/CEF_model_500features_full.model')
 
     ids_to_delete = model.top_k()
-    with open("models/CEFout/ids_500features.pickle", "wb") as f:
+    with open("models/CEFout/ids_500features_full.pickle", "wb") as f:
         pickle.dump(ids_to_delete, f)
 
 

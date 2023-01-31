@@ -12,20 +12,20 @@ from train_CEF import *
 import copy
 import tqdm
 device = 'cpu'
-dataset_path = "models/Dataset_20.pickle"
+dataset_path = "models/Dataset_500_features.pickle"
 with open(dataset_path, "rb") as f:
     rec_dataset = pickle.load(f)
 
-model_path = "models/model_20.model"
+model_path = "models/model_500_features.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 5
 
-cef_model_path = "models/CEF_model_300.model"
+cef_model_path = "models/CEF_model_500features_full.model"
 cef_model = CEF()
 cef_model.load_state_dict(torch.load(cef_model_path))
 
-with open("models/ids.pickle_300", "rb") as f:
+with open("models/CEFout/ids_500features_full.pickle", "rb") as f:
     CEF_ids_to_delete = pickle.load(f)
 
 CEF_ids_to_delete.reverse()
@@ -36,7 +36,7 @@ def run_tests(dataset, model, CEF_model, ids_to_delete):
     k = 5
     device = "cpu"
     # CEF_model = CEF()
-    delta = CEF_model.delta
+    # delta = CEF_model.delta
     # ids_to_delete = CEF_model.top_k(delta)
 
     feature_count = min(dataset.feature_num//e, 1000)
