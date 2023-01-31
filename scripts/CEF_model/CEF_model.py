@@ -1,9 +1,6 @@
 import torch
-from models import BaseRecModel
-from args import *
-import pickle
 import numpy as np
-from evaluate_functions import compute_ltr
+from ..evaluation.eval_model import *
 import tqdm
 
 # We define the following variables:
@@ -109,7 +106,7 @@ class CEF(torch.nn.Module):
 
     def evaluate_model(self):
         self.update_exposures()
-        ltr = compute_ltr(self.exposure["G0"], self.exposure["G1"])
+        _, _, ltr = eval_model(self.dataset, 5, self.basemodel, self.device)
         print(f"long tail rate: {ltr}")
 
 
@@ -123,8 +120,8 @@ class CEF(torch.nn.Module):
         delta = delta.detach().numpy()
 
         adjusted_if_matrix = self.dataset.item_feature_matrix.copy()
-        adjusted_if_matrix[:,feature_id] += delta[:,feature_id]
         adjusted_uf_matrix = self.dataset.user_feature_matrix.copy()
+        adjusted_uf_matrix[:,feature_id] += delta[:,feature_id]
         self.update_recommendations(adjusted_if_matrix, adjusted_uf_matrix)
         self.update_exposures()
 
@@ -141,7 +138,7 @@ class CEF(torch.nn.Module):
         return v
 
     def top_k(self, beta=0.1):
-        delta = self.delta.detach().numpy()
+        delta = self.delta
         ES_scores = {}
         for i in tqdm.trange(self.delta.shape[1]):
             prox = torch.norm(self.delta[:,i])

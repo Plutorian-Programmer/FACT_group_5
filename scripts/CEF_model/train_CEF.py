@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from CEF_model import *
+from .CEF_model import *
 
 def train_delta(CEF_args, model):
     # Init values

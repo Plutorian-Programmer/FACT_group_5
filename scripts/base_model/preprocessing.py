@@ -179,7 +179,7 @@ class Dataset():
         training_data = []
         item_set = set(self.items)
         for user, items in self.user_hist_inter_dict.items():
-            items = items[:-(self.args.test_length+self.args.val_length)]
+            items = items[:-(self.args.test_length)]
             training_pairs = sample_training_pairs(
                 user, 
                 items, 
@@ -195,7 +195,7 @@ class Dataset():
         print('======================= sample test data =======================')
         user_item_label_list = []  # [[u, [item1, item2, ...], [l1, l2, ...]], ...]
         for user, items in self.user_hist_inter_dict.items():
-            items = items[-(self.args.test_length+self.args.val_length):]
+            items = items[-(self.args.test_length):]
             user_item_label_list.append([user, items, np.ones(len(items))])  # add the test items
             negative_items = [item for item in self.items if 
                 item not in self.user_hist_inter_dict[user]]  # the not interacted items
