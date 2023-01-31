@@ -29,8 +29,8 @@ class CEF(torch.nn.Module):
     def __init__(self):
         super(CEF, self).__init__()
         self.device = 'cpu'
-        dataset_path="models/Dataset_20_test.pickle"
-        model_path="models/model_20_test.model"
+        dataset_path="models/Dataset_20.pickle"
+        model_path="models/model_20.model"
 
         with open(dataset_path, "rb") as f:
             self.dataset = pickle.load(f)

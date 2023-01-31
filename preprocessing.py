@@ -8,6 +8,7 @@ class Dataset():
     def __init__(self, preprocessing_args):
         super().__init__()
         self.args = preprocessing_args
+        self.feature_count = 100
 
         self.sentiment_data = None
         self.user_name_dict = {}  # rename users to integer names
@@ -37,6 +38,7 @@ class Dataset():
 
         self.pre_processing()
         self.get_user_item_feature_matrix() # Get the attention matrices
+        self.filter_features()
         self.sample_training()  # sample training data, for traning BPR loss
         self.sample_test()  # sample test data
 
@@ -175,6 +177,21 @@ class Dataset():
             max_range=5)
         return True
     
+    def filter_features(self):
+        feature_matrix = self.item_feature_matrix
+        feature_matrix = np.where(feature_matrix != 0, 1, 0)
+        existence_array = np.sum(feature_matrix, axis=0)
+        existence_array = np.argsort(existence_array)[::-1]
+        pop_indexes = existence_array[:self.feature_count]
+        new_item_feature_matrix = np.array([self.item_feature_matrix[:, i] for i in pop_indexes]).T
+        new_user_feature_matrix = np.array([self.user_feature_matrix[:, i] for i in pop_indexes]).T
+        new_features = [self.features[i] for i in pop_indexes]
+
+        self.item_feature_matrix = new_item_feature_matrix
+        self.user_feature_matrix = new_user_feature_matrix
+        self.features = new_features
+        self.feature_num = len(self.features)
+
     def sample_training(self):
         print('======================= sample training data =======================')
         # print(self.user_feature_matrix.shape, self.item_feature_matrix.shape)

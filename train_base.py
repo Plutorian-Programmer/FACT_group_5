@@ -1,7 +1,7 @@
 from preprocessing import Dataset
 from torch.utils.data import DataLoader
 from dataloaders import UserItemInterDataset
-from evaluate_functions import compute_ndcg, compute_f1
+from evaluate_functions import eval_model
 import torch
 from models import BaseRecModel
 from args import *
@@ -36,9 +36,7 @@ def trainmodel(train_args, pre_processing_args):
     loss_fn = torch.nn.BCELoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=train_args.lr, weight_decay=1e-5)
 
-    ndcg = compute_ndcg(rec_dataset.test_data, 
-            rec_dataset.user_feature_matrix, 
-            rec_dataset.item_feature_matrix, 
+    ndcg, _, _ = eval_model(rec_dataset, 
             train_args.rec_k,  
             model, 
             device)
@@ -63,10 +61,8 @@ def trainmodel(train_args, pre_processing_args):
         print('epoch %d: ' % epoch, 'training loss: ', ave_train)
 
         if epoch % 10 == 0:
-            ndcg = compute_ndcg(rec_dataset.test_data, 
-            rec_dataset.user_feature_matrix, 
-            rec_dataset.item_feature_matrix, 
-            train_args.rec_k, 
+            ndcg, _, _ = eval_model(rec_dataset, 
+            train_args.rec_k,  
             model, 
             device)
             print('epoch %d: ' % epoch, 'training loss: ', ave_train, 'NDCG: ', ndcg)

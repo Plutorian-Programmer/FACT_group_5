@@ -11,6 +11,7 @@ def baseline_random(dataset, e=5, method = "both", visited = []):
     dataset = copy.deepcopy(dataset)
     total_features = dataset.feature_num
     possible_features = []
+    removal_list = []
     for feature in range(total_features):
         if feature not in visited:
             possible_features.append(feature)

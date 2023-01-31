@@ -12,11 +12,11 @@ from train_CEF import *
 import copy
 import tqdm
 device = 'cpu'
-dataset_path = "models/Dataset_20_test.pickle"
+dataset_path = "models/Dataset_20.pickle"
 with open(dataset_path, "rb") as f:
     rec_dataset = pickle.load(f)
 
-model_path = "models/model_20_test.model"
+model_path = "models/model_20.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 5
@@ -32,7 +32,7 @@ CEF_ids_to_delete.reverse()
 
 def run_tests(dataset, model, CEF_model, ids_to_delete):
     np.random.seed(42)
-    e = 50
+    e = 5
     k = 5
     device = "cpu"
     # CEF_model = CEF()
