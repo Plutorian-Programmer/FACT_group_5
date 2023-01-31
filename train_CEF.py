@@ -8,13 +8,13 @@ def train_delta(model):
     # Init values
     if_matrix = torch.Tensor(model.dataset.item_feature_matrix)
     uf_matrix = torch.Tensor(model.dataset.user_feature_matrix)
-    optimizer = torch.optim.Adam([model.delta],lr=lr*1, betas=(0.9,0.999))
+    optimizer = torch.optim.Adam([model.delta],lr=lr, betas=(0.9,0.999))
 
     # for i, p in enumerate(model.parameters()):
     #     if i > 0:
     #         p.requires_grad = False
 
-    for i in tqdm.trange(30):
+    for i in tqdm.trange(300):
         model.train()
         optimizer.zero_grad()
 
@@ -26,16 +26,16 @@ def train_delta(model):
         disparity = model.get_cf_disparity(model.recommendations, adjusted_if_matrix, adjusted_uf_matrix)
         loss = model.loss_fn(disparity, ld, model.delta)
 
-        print(sum(p.numel() for p in model.parameters() if p.requires_grad))
+        # print(sum(p.numel() for p in model.parameters() if p.requires_grad))
         loss.backward(retain_graph=True)
 
-        print(model.delta.grad.norm())
+        print(f"delta size: {model.delta.grad.norm()}")
 
         optimizer.step()
 
         print(f"epoch {i}")
-        print(f"Disparity: {disparity}")
-        print(f"loss: {loss}")
+        print(f"Disparity: {np.round(disparity[0].detach().numpy(), 3)}")
+        print(f"loss: {np.round(loss[0].detach().numpy(), 3)}")
 
         model.evaluate_model()
 
@@ -47,10 +47,10 @@ if __name__ == "__main__":
     model = CEF()
     delta = train_delta(model)
     torch.save(delta, 'models/delta.pt')
-    torch.save(model.state_dict(), 'models/CEF_model.model')
+    torch.save(model.state_dict(), 'models/CEF_model_300.model')
 
     ids_to_delete = model.top_k(delta)
-    with open("models/ids.pickle", "wb") as f:
+    with open("models/ids.pickle_300", "wb") as f:
         pickle.dump(ids_to_delete, f)
 
 

@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from CEF_model import *
 from train_CEF import *
 import copy
+import tqdm
 device = 'cpu'
 dataset_path = "models/Dataset_20_test.pickle"
 with open(dataset_path, "rb") as f:
@@ -20,12 +21,14 @@ model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 5
 
-cef_model_path = "models/CEF_model.model"
+cef_model_path = "models/CEF_model_300.model"
 cef_model = CEF()
 cef_model.load_state_dict(torch.load(cef_model_path))
 
-with open("models/ids.pickle", "rb") as f:
+with open("models/ids.pickle_300", "rb") as f:
     CEF_ids_to_delete = pickle.load(f)
+
+CEF_ids_to_delete.reverse()
 
 def run_tests(dataset, model, CEF_model, ids_to_delete):
     np.random.seed(42)
@@ -56,10 +59,10 @@ def run_tests(dataset, model, CEF_model, ids_to_delete):
     results["CEF"]["ndcg"].append(ndcg)
     results["CEF"]["lt"].append(lt)
     
-    progress = [i/10 for i in range(12)]
-    for _ in range(feature_count):
-        if progress != [] and _/feature_count >= progress[0]:
-            print(progress.pop(0))
+    # progress = [i/10 for i in range(12)]
+    for _ in tqdm.trange(feature_count):
+        # if progress != [] and _/feature_count >= progress[0]:
+        #     print(progress.pop(0))
         # print(_)
         #random
         random_dataset = baseline_random(random_dataset, e=e, visited=visited_random)
