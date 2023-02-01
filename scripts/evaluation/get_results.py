@@ -23,10 +23,10 @@ def get_results(dataset, result_args, base_model, CEF_Model, CEF_delete_list=Non
     random_dataset = copy.deepcopy(dataset)
     pop_item_dataset = copy.deepcopy(dataset)
     pop_user_dataset = copy.deepcopy(dataset)
-    # CEF_dataset = copy.deepcopy(dataset)
+    CEF_dataset = copy.deepcopy(dataset)
     
-    # if CEF_delete_list == None:
-    #     CEF_delete_list = CEF_Model.top_k(result_args.beta)
+    if CEF_delete_list == None:
+        CEF_delete_list = CEF_Model.top_k(result_args.beta)
     random_delete_list = baseline_random(dataset)
     pop_item_delete_list = baseline_pop(dataset, "item")
     pop_user_delete_list = baseline_pop(dataset, "user")
@@ -71,12 +71,12 @@ def get_results(dataset, result_args, base_model, CEF_Model, CEF_delete_list=Non
         results["pop_user"]["lt"].append(lt_user)
 
         #CEF
-        # idx_list = CEF_delete_list[:e]
-        # CEF_delete_list = CEF_delete_list[e:]
-        # CEF_dataset.remove_features(idx_list)
-        # ndcg_CEF, _ , lt_CEF = eval_model(CEF_dataset, k, base_model, device)
-        # results["CEF"]["ndcg"].append(ndcg_CEF)
-        # results["CEF"]["lt"].append(lt_CEF)
+        idx_list = CEF_delete_list[:e]
+        CEF_delete_list = CEF_delete_list[e:]
+        CEF_dataset.remove_features(idx_list)
+        ndcg_CEF, _ , lt_CEF = eval_model(CEF_dataset, k, base_model, device)
+        results["CEF"]["ndcg"].append(ndcg_CEF)
+        results["CEF"]["lt"].append(lt_CEF)
 
     results = dict(results)
     output_path = result_args.output_path + f"results_{feature_count}_features_{e}_removals.pickle"
