@@ -38,12 +38,12 @@ def eval_model(dataset, k, model, device):
                     fp += 1
             if tp == 0:
                 f1_scores.append(0)
-                continue
-            fn = k-tp
-            prec = tp/(tp+fp)
-            rec = tp/(tp+fn)
-            f1 = (2*prec*rec)/(prec+rec)
-            f1_scores.append(f1)
+            else:
+                fn = k-tp
+                prec = tp/(tp+fp)
+                rec = tp/(tp+fn)
+                f1 = (2*prec*rec)/(prec+rec)
+                f1_scores.append(f1)
 
             #lt
             lt = 0

@@ -11,7 +11,7 @@ def get_feature_list(sentiment_data):
         for fos in row[2:]:
             feature = fos[0]
             feature_set.add(feature)
-    feature_list = np.array(list(feature_set))
+    feature_list = np.array(list(feature_set), dtype="object")
     return feature_list
 
 def sentiment_data_filtering(sentiment_data, item_tresh, user_tresh):
@@ -45,7 +45,7 @@ def sentiment_data_filtering(sentiment_data, item_tresh, user_tresh):
     print('valid item : ', len(item_dict))
     print("valid feature length: ", len(features))
     print('user dense is:', len(sentiment_data) / len(user_dict))
-    sentiment_data = np.array(sentiment_data)
+    sentiment_data = np.array(sentiment_data, dtype="object")
     return sentiment_data
 
 def get_user_attention_matrix(sentiment_data, user_num, feature_list, max_range=5):

@@ -5,7 +5,8 @@ import numpy as np
 def baseline_random(dataset):
     total_features = dataset.feature_num
     np.random.seed(42)
-    removal_list = np.random.shuffle(np.arrange(total_features))
+    removal_list = np.arange(total_features)
+    np.random.shuffle(removal_list)
 
     return removal_list
     
