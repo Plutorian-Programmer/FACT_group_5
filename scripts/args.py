@@ -8,7 +8,7 @@ def arg_parser_preprocessing():
                         help="path to original review data")
     parser.add_argument("--user_thresh", dest="user_thresh", type=int, default=20, 
                         help="remove users with reviews less than this threshold")
-    parser.add_argument("--item_thresh", dest="item_thresh", type=int, default=20, 
+    parser.add_argument("--item_thresh", dest="item_thresh", type=int, default=10, 
                         help="remove users with reviews less than this threshold")
     parser.add_argument("--sample_ratio", dest="sample_ratio", type=int, default=2, 
                         help="the (negative: positive sample) ratio for training BPR loss")
