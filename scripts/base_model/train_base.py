@@ -42,7 +42,7 @@ def trainmodel(train_args, rec_dataset):
             ave_train = np.mean(np.array(losses))
         print('epoch %d: ' % epoch, 'training loss: ', ave_train)
 
-        if epoch % 10 == 0:
+        if epoch % 2 == 0:
             ndcg, _, _ = eval_model(rec_dataset, 5, model, device)
             print('epoch %d: ' % epoch, 'training loss: ', ave_train, 'NDCG: ', ndcg)
     
