@@ -30,6 +30,7 @@ def trainmodel(train_args, rec_dataset):
         optimizer.zero_grad()
         losses = []
         for user_behaviour_feature, item_aspect_feature, label in train_loader:
+            optimizer.zero_grad()
             user_behaviour_feature = user_behaviour_feature.to(device)
             item_aspect_feature = item_aspect_feature.to(device)
             label = label.float().to(device)
@@ -37,7 +38,6 @@ def trainmodel(train_args, rec_dataset):
             loss = loss_fn(out, label)
             loss.backward()
             optimizer.step()
-            optimizer.zero_grad()
             losses.append(loss.to('cpu').detach().numpy())
             ave_train = np.mean(np.array(losses))
         print('epoch %d: ' % epoch, 'training loss: ', ave_train)

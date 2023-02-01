@@ -8,7 +8,7 @@ def arg_parser_preprocessing():
                         help="path to original review data")
     parser.add_argument("--user_thresh", dest="user_thresh", type=int, default=20, 
                         help="remove users with reviews less than this threshold")
-    parser.add_argument("--item_thresh", dest="item_thresh", type=int, default=10, 
+    parser.add_argument("--item_thresh", dest="item_thresh", type=int, default=15, 
                         help="remove users with reviews less than this threshold")
     parser.add_argument("--sample_ratio", dest="sample_ratio", type=int, default=2, 
                         help="the (negative: positive sample) ratio for training BPR loss")
@@ -35,8 +35,21 @@ def arg_parser_training():
     parser.add_argument("--weight_decay", default=0., type=float) # not sure whether to use
     parser.add_argument("--model_path", dest="model_path", type=str, default="data/models/model.model", 
                         help="The path to save the model")
-    parser.add_argument("--epochs", dest="epochs", type=int, default=1)
-    parser.add_argument("--use_pre", dest="use_pre", type=str, default=True, 
+    parser.add_argument("--epochs", dest="epochs", type=int, default=30)
+    parser.add_argument("--use_pre", dest="use_pre", type=str, default=False, 
+            help="Wether or not to use a stored model object")
+    return parser.parse_known_args()
+
+def arg_parser_CEF():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--device", dest = "device", type=str, default='cpu')
+    parser.add_argument("--rec_k", dest="rec_k", type=int, default=5, help="length of rec list")
+    parser.add_argument("--ld", default=1, type=float) # not sure whether to use
+    parser.add_argument("--lr", dest="lr", type=float, default=0.01)
+    parser.add_argument("--model_path", dest="model_path", type=str, default="data/models/CEF_model.model", 
+                        help="The path to save the model")
+    parser.add_argument("--epochs", dest="epochs", type=int, default=30)
+    parser.add_argument("--use_pre", dest="use_pre", type=str, default=False, 
             help="Wether or not to use a stored model object")
     return parser.parse_known_args()
 

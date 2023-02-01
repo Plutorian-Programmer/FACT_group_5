@@ -35,27 +35,36 @@ def train_delta(args, model):
         optimizer.step()
 
         print(f"epoch {i}")
-        print(f"Disparity: {np.round(disparity[0].detach().numpy(), 3)}")
-        print(f"loss: {np.round(loss[0].detach().numpy(), 3)}")
+        print(f"Disparity: {disparity[0]}")
+        print(f"loss: {loss[0]}")
 
         model.evaluate_model()
 
     # output_path = "models/CEF_model_full.model"
     # torch.save(model.state_dict(), output_path)
+    torch.save(model.state_dict(), args.model_path)
+
     return model
 
 
 
 if __name__ == "__main__":
-    model = CEF()
+    args = arg_parser_training()
+    args.device = 'cpu' if not torch.cuda.is_available() else 'cuda:0'
+    with open('../../data/preprocessed_data/dataset.pickle', "rb") as f:
+        dataset = pickle.load(f)
+    base_model = BaseRecModel(dataset.feature_num, dataset).to(args.device)
+    base_model.load_state_dict(torch.load('../../data/models/model.model'))
+    model = CEF(args, dataset, base_model, featurewise=False)
+
     model = train_delta(model)
     # torch.save(delta_i, 'models/CEFout/delta_i_500features_full.pt')
     # torch.save(delta_u, 'models/CEFout/delta_u_500features_full.pt')
     # torch.save(model.state_dict(), 'models/CEF_model_500features_full.model')
 
-    ids_to_delete = model.top_k()
-    with open("models/CEFout/ids_500features_full.pickle", "wb") as f:
-        pickle.dump(ids_to_delete, f)
+    # ids_to_delete = model.top_k()
+    # with open("models/CEFout/ids_500features_full.pickle", "wb") as f:
+    #     pickle.dump(ids_to_delete, f)
 
 
 
