@@ -11,28 +11,31 @@ from CEF_model import *
 from train_CEF import *
 import copy
 import tqdm
+import datetime
+
+# print(f"now: {datetime.datetime.now().time()}")
 device = 'cpu'
-dataset_path = "models/Dataset_500_features.pickle"
+dataset_path = "models/Dataset.pickle" #"models/Dataset_500_features.pickle"
 with open(dataset_path, "rb") as f:
     rec_dataset = pickle.load(f)
 
-model_path = "models/model_500_features.model"
+model_path = "models/model.model" #"models/model_500_features.model"
 model = BaseRecModel(rec_dataset.feature_num, rec_dataset).to(device)
 model.load_state_dict(torch.load(model_path))
 k = 5
 
-cef_model_path = "models/CEF_model_500features_full.model"
-cef_model = CEF()
-cef_model.load_state_dict(torch.load(cef_model_path))
+# cef_model_path = "models/CEF_model.model"
+# cef_model = CEF()
+# cef_model.load_state_dict(torch.load(cef_model_path))
 
-with open("models/CEFout/ids_500features_full.pickle", "rb") as f:
+with open("models/CEFout/ids_full.pickle", "rb") as f:
     CEF_ids_to_delete = pickle.load(f)
 
-CEF_ids_to_delete.reverse()
+# CEF_ids_to_delete.reverse()
 
-def run_tests(dataset, model, CEF_model, ids_to_delete):
+def run_tests(dataset, model, CEF_model, ids_to_delete, mode=""):
     np.random.seed(42)
-    e = 5
+    e = 50
     k = 5
     device = "cpu"
     # CEF_model = CEF()
@@ -91,7 +94,7 @@ def run_tests(dataset, model, CEF_model, ids_to_delete):
         results["CEF"]["lt"].append(lt_CEF)
 
     results = dict(results)
-    with open(f"results/ndcg_lt_{feature_count}_{e}.pickle", "wb") as f:
+    with open(f"results/ndcg_lt_{feature_count}_{e}_{mode}_2_12.pickle", "wb") as f:
         pickle.dump(results, f)
     
     return results
@@ -100,14 +103,18 @@ def run_tests(dataset, model, CEF_model, ids_to_delete):
 def plot_results(results):
     for method in results:
         result = results[method]
-        plt.scatter(result["lt"], result["ndcg"], label = method)
+        plt.plot(result["lt"], result["ndcg"], label = method)
     
     plt.xlabel("long tail rate")
     plt.ylabel("NDCG")
     plt.legend()
     plt.show()
 
-results = run_tests(rec_dataset, model, cef_model, CEF_ids_to_delete)
+results = run_tests(rec_dataset, model, None, CEF_ids_to_delete)
+
+# with open(f"results/ndcg_lt_111_20.pickle", 'rb') as f:
+#     results = pickle.load(f)
+
 
 # with open("results/ndcg_lt_20.pickle", "rb") as f:
 #     results = pickle.load(f)

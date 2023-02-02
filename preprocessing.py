@@ -8,7 +8,6 @@ class Dataset():
     def __init__(self, preprocessing_args):
         super().__init__()
         self.args = preprocessing_args
-        self.max_features = 500
 
         self.sentiment_data = None
         self.user_name_dict = {}  # rename users to integer names
@@ -38,7 +37,7 @@ class Dataset():
 
         self.pre_processing()
         self.get_user_item_feature_matrix() # Get the attention matrices
-        self.filter_features()
+        # self.filter_features()
         self.sample_training()  # sample training data, for traning BPR loss
         self.sample_test()  # sample test data
 
@@ -63,8 +62,8 @@ class Dataset():
                         sentiment = fos.split('|')[2]
                         sentiment_data[-1].append([feature, opinion, sentiment])
                 line = f.readline().strip()
-        sentiment_data = np.array(sentiment_data)
-        sentiment_data = sentiment_data_filtering(sentiment_data, 15, self.args.user_thresh)
+        sentiment_data = np.array(sentiment_data, dtype=object)
+        sentiment_data = sentiment_data_filtering(sentiment_data, self.args.item_thresh, self.args.user_thresh)
         user_dict, item_dict = get_user_item_dict(sentiment_data)
         user_item_date_dict = {}
 

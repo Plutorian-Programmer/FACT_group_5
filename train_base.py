@@ -43,7 +43,7 @@ def trainmodel(train_args, pre_processing_args):
     print('init ndcg:', ndcg)
 
     # Training loop
-    for epoch in tqdm.trange(30): #train_args.epoch
+    for epoch in tqdm.trange(train_args.epochs): #train_args.epoch
         model.train()
         optimizer.zero_grad()
         losses = []
@@ -69,6 +69,10 @@ def trainmodel(train_args, pre_processing_args):
     
     output_path = train_args.output_path
     torch.save(model.state_dict(), output_path)
+    ndcg, f1, _ = eval_model(rec_dataset, train_args.rec_k, model, device)
+    print("Base model performance:")
+    print(f"NDCG: {ndcg}")
+    print(f"F1: {f1}")
     return 0
 
 

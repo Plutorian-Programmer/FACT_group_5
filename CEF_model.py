@@ -30,8 +30,8 @@ class CEF(torch.nn.Module):
     def __init__(self, featurewise=False):
         super(CEF, self).__init__()
         self.device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:0")
-        dataset_path="models/Dataset_500_features.pickle"
-        model_path="models/model_500_features.model"
+        dataset_path="models/Dataset.pickle" #"models/Dataset_500_features.pickle"
+        model_path= "models/model.model" #"models/model_500_features.model"
 
         with open(dataset_path, "rb") as f:
             self.dataset = pickle.load(f)
@@ -41,7 +41,9 @@ class CEF(torch.nn.Module):
         for p in self.basemodel.parameters():
             p.requires_grad = False
     
-        
+        np.random.seed(42)
+        torch.manual_seed(42)
+
         
         if featurewise:
             self.delta_i = torch.zeros(self.dataset.item_feature_matrix.shape)

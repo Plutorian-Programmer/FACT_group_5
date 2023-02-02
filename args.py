@@ -8,7 +8,7 @@ def arg_parser_preprocessing():
                         help="path to original review data")
     parser.add_argument("--user_thresh", dest="user_thresh", type=int, default=20, 
                         help="remove users with reviews less than this threshold")
-    parser.add_argument("--item_thresh", dest="item_thresh", type=int, default=20, 
+    parser.add_argument("--item_thresh", dest="item_thresh", type=int, default=10, 
                         help="remove users with reviews less than this threshold")
     parser.add_argument("--sample_ratio", dest="sample_ratio", type=int, default=2, 
                         help="the (negative: positive sample) ratio for training BPR loss")
@@ -17,7 +17,7 @@ def arg_parser_preprocessing():
     parser.add_argument("--val_length", dest="val_length", type=int, default=1, 
                         help="the number of val items")
     parser.add_argument("--neg_length", dest="neg_length", type=int, default=100, help="# of negative samples in evaluation")
-    parser.add_argument("--save_path", dest="save_path", type=str, default="models/Dataset_500_features.pickle", 
+    parser.add_argument("--save_path", dest="save_path", type=str, default="models/Dataset.pickle", 
                         help="The path to save the preprocessed dataset object")
     parser.add_argument("--use_pre", dest="use_pre", type=str, default=False, 
             help="The path to save the preprocessed dataset object")
@@ -33,8 +33,8 @@ def arg_parser_training():
     parser.add_argument("--rec_k", dest="rec_k", type=int, default=5, help="length of rec list")
     parser.add_argument("--gpu", default=False)
     parser.add_argument("--weight_decay", default=0., type=float) # not sure whether to use
-    parser.add_argument("--output_path", dest="output_path", type=str, default="models/model_500_features.model", 
+    parser.add_argument("--output_path", dest="output_path", type=str, default="models/model.model", 
                         help="The path to save the model")
-    parser.add_argument("--epochs", dest="epochs", type=int, default=10)
+    parser.add_argument("--epochs", dest="epochs", type=int, default=50)
     return parser.parse_args()
 
