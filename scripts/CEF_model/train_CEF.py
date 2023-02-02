@@ -40,8 +40,8 @@ def train_delta(args, model):
 
         model.evaluate_model()
 
-    # output_path = "models/CEF_model_full.model"
-    # torch.save(model.state_dict(), output_path)
+    output_path = args.model_path
+    torch.save(model.state_dict(), output_path)
     return model
 
 
