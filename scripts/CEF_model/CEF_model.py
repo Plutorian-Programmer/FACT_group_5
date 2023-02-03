@@ -154,7 +154,7 @@ class CEF(torch.nn.Module):
         delta = torch.cat((self.delta_u.detach(), self.delta_i.detach()), dim=0).detach().numpy()
         ES_scores = {}
         # for i in tqdm.trange(delta.shape[1]): #delta.shape[1]
-        for i in tqdm.trang(1):
+        for i in tqdm.trange(1):
             prox = np.linalg.norm(delta[:,i])**2
             validity = self.validity(i)
 
