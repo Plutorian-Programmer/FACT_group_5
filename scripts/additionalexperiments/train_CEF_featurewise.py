@@ -1,6 +1,7 @@
 import numpy as np
 import torch
-from CEF_model import *
+from ..CEF_model.CEF_model import *
+import tqdm
 
 def train_delta(model):
     ld = 1
@@ -58,8 +59,6 @@ def train_delta(model):
 
             #     # model.evaluate_model()
 
-    # output_path = "models/CEF_model_featurewise.model"
-    # # torch.save(model.state_dict(), output_path)
     return model.delta_i, model.delta_u, model
 
 
@@ -67,31 +66,6 @@ def train_delta(model):
 if __name__ == "__main__":
     model = CEF(featurewise=True)
     delta_i, delta_u, model = train_delta(model)
-    torch.save(delta_i, 'models/CEFout/delta_i_500features_featurewise_TEST.pt')
-    torch.save(delta_u, 'models/CEFout/delta_u_500features_featurewise_TEST.pt')
-    torch.save(model.state_dict(), 'models/CEF_model_500features_featurewise_TEST.model')
-
-    # ids_to_delete = model.top_k()
-    # with open("models/CEFout/ids_500features_featurewise.pickle", "wb") as f:
-    #     pickle.dump(ids_to_delete, f)
-
-
-
-# def explainability_scores(self, feature, delta, k=5):
-# #generate feature-based explanations based on updated exposures 
-#     og_exp0 = self.og_exposure["G0"]
-#     og_exp1 = self.og_exposure["G1"]
-    
-#     cf_exp0 = self.exposure["G0"]
-#     cf_exp1 = self.exposure["G1"]
-
-#     m = len(user_feature_matrix[0])     #number of users
-#     # K = 20                              #length of recommendation lists
-#     beta = 0.5
-
-#     validity = ((og_exp0 - og_exp1) / (m * k))  - ((cf_exp0 - cf_exp1) / (m * k))
-#     proximity = (np.linalg.norm(delta) **2)
-#     ES = validity - beta * proximity
-
-
-#     return(ES)
+    torch.save(delta_i, '../../models/CEFout/delta_i_500features_featurewise.pt')
+    torch.save(delta_u, '../../models/CEFout/delta_u_500features_featurewise.pt')
+    torch.save(model.state_dict(), '../../models/CEF_model_500features_featurewise.model')
