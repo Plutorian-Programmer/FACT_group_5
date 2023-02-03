@@ -38,9 +38,6 @@ class Dataset():
         self.sample_training()  # sample training data, for traning BPR loss
         self.sample_test()  # sample test data
 
-        # print(self.training_data)
-        # print(self.test_data)
-
     def pre_processing(self,):
         sentiment_data = []
         with open(self.args.sentires_dir, 'r') as f:
