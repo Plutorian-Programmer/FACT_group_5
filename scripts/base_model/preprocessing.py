@@ -40,6 +40,8 @@ class Dataset():
 
     def pre_processing(self,):
         sentiment_data = []
+
+        #load data
         with open(self.args.sentires_dir, 'r') as f:
             line = f.readline().strip()
             while line:

@@ -1,14 +1,8 @@
 from .eval_model import *
 from ..baselines import *
 from ..utils import *
-import torch
-from ..base_model.models import BaseRecModel
-from ..args import *
 import pickle
 from collections import defaultdict
-import matplotlib.pyplot as plt
-# from CEF_model import *
-# from train_CEF import *
 import copy
 
 def get_results(dataset, result_args, base_model, CEF_Model, CEF_delete_list=None):
@@ -42,10 +36,11 @@ def get_results(dataset, result_args, base_model, CEF_Model, CEF_delete_list=Non
     results["CEF"]["lt"].append(lt)
     
     progress = [i/10 for i in range(12)]
+    
+    #eval all baselines and CEF model
     for _ in range(feature_count):
         if progress != [] and _/feature_count >= progress[0]:
             print(progress.pop(0))
-        # print(_)
         #random
         idx_list = random_delete_list[:e]
         random_delete_list = random_delete_list[e:]
@@ -84,14 +79,3 @@ def get_results(dataset, result_args, base_model, CEF_Model, CEF_delete_list=Non
         pickle.dump(results, f)
     
     return results
-
-
-def plot_results(results):
-    for method in results:
-        result = results[method]
-        plt.scatter(result["lt"], result["ndcg"], label = method)
-    
-    plt.xlabel("long tail rate")
-    plt.ylabel("NDCG")
-    plt.legend()
-    plt.show()

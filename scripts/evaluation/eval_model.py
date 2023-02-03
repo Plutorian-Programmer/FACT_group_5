@@ -13,10 +13,13 @@ def eval_model(dataset, k, model, device):
     f1_scores = []
     lt_scores = []
     with torch.no_grad():
+        #loop over all test data
         for row in test_data:
             user = row[0]
             items = row[1]
             gt_labels = row[2]
+
+            #get the prediction list for each user
             user_features = np.array([user_feature_matrix[user] for _ in range(len(items))])
             item_features = np.array([item_feature_matrix[item] for item in items])
             scores = model(torch.from_numpy(user_features).to(device),
